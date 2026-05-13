@@ -1,5 +1,5 @@
 ---
-name: compact
+name: zen-compact
 description: Prépare une compaction manuelle propre. Commit + push de ce qui est commitable, écrit une entrée session-focused dans docs/JOURNAL.md (ce qui a été fait, décisions, fichiers touchés, prochaine étape), puis sort la commande /compact avec les instructions adaptées au projet prête à coller.
 argument-hint: ""
 allowed-tools:
@@ -28,7 +28,7 @@ Lance `git rev-parse --is-inside-work-tree`. Si ça échoue, saute l'étape 1 en
 
 Ajoute une nouvelle entrée en haut de `docs/JOURNAL.md` (ou `JOURNAL.md` à la racine). Crée `docs/JOURNAL.md` si aucun n'existe.
 
-Cette entrée est **focalisée session**, pas un handoff complet comme `/zen:pause` :
+Cette entrée est **focalisée session**, pas un handoff complet comme `/zen-pause` :
 
 ```markdown
 ## YYYY-MM-DD HH:MM — Compact

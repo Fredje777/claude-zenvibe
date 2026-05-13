@@ -1,5 +1,5 @@
 ---
-name: pause
+name: zen-pause
 description: Sauvegarde l'état de la session avant une absence de plusieurs heures. Commit + push de ce qui est commitable, écrit une entrée détaillée dans docs/JOURNAL.md (tâches terminées, tâche en cours, restant à faire, décisions, questions ouvertes, état Git), signale les points d'attention pour la reprise.
 argument-hint: "[note optionnelle: ex. 'pause déjeuner, reprendre par l'auth JWT']"
 allowed-tools:
@@ -78,7 +78,7 @@ Sors exactement un bloc court — pas de préambule, pas de récap du contenu du
 ✓ Push : <branche> → <remote>   (ou : "rien à committer")
 ✓ Journal : docs/JOURNAL.md
 
-Bonne pause. Au retour : /zen:resume
+Bonne pause. Au retour : /zen-resume
 ```
 
 Si quelque chose a échoué (push refusé, journal non écrivable, fichiers WIP laissés), dis-le explicitement avec les fichiers concernés. Ne prétends jamais une réussite qui n'a pas eu lieu.

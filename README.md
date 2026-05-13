@@ -29,15 +29,15 @@ Le principe est simple : **`docs/JOURNAL.md` est la source unique de vérité**.
 
 | Commande | Quand | Action |
 |---|---|---|
-| `/zen:pause [note]` | Tu pars pour quelques heures | Commit + push + entrée détaillée dans `docs/JOURNAL.md` (sprint, décisions, questions, points d'attention) |
-| `/zen:resume` | Tu reviens d'une pause ou d'une compaction | Lit le JOURNAL + `CLAUDE.md`, résume l'état, propose la prochaine action, attend ton feu vert |
-| `/zen:compact` | Tu veux compacter consciemment | Checkpoint léger + sort la commande `/compact <instructions>` prête à coller |
+| `/zen-pause [note]` | Tu pars pour quelques heures | Commit + push + entrée détaillée dans `docs/JOURNAL.md` (sprint, décisions, questions, points d'attention) |
+| `/zen-resume` | Tu reviens d'une pause ou d'une compaction | Lit le JOURNAL + `CLAUDE.md`, résume l'état, propose la prochaine action, attend ton feu vert |
+| `/zen-compact` | Tu veux compacter consciemment | Checkpoint léger + sort la commande `/compact <instructions>` prête à coller |
 
 ### Hooks (CC CLI + VS Code)
 
 | Événement | Action |
 |---|---|
-| `PreCompact` | Avant toute compaction (manuelle ou auto), Claude reçoit l'instruction de faire un checkpoint propre : commit, JOURNAL.md, push. Filet de sécurité si tu oublies de lancer `/zen:compact`. |
+| `PreCompact` | Avant toute compaction (manuelle ou auto), Claude reçoit l'instruction de faire un checkpoint propre : commit, JOURNAL.md, push. Filet de sécurité si tu oublies de lancer `/zen-compact`. |
 | `SessionStart` | À l'ouverture (mode `startup` ou `compact`), si un `JOURNAL.md` récent (<14 jours) existe, Claude affiche un mini-briefing 3-lignes au premier message. Silencieux sinon. |
 
 ### MCP tools (App desktop)
@@ -142,9 +142,9 @@ zen/  (install dir; source dir s'appelle zenvibe/)
 ├── .claude-plugin/plugin.json          manifeste CC (name: "zen")
 ├── .mcp.json                           MCP server pour CC CLI
 ├── commands/
-│   ├── pause.md                        /zen:pause
-│   ├── resume.md                       /zen:resume
-│   └── compact.md                      /zen:compact
+│   ├── zen-pause.md                    /zen-pause
+│   ├── zen-resume.md                   /zen-resume
+│   └── zen-compact.md                  /zen-compact
 ├── hooks/
 │   ├── hooks.json                      PreCompact + SessionStart
 │   ├── pre-compact-prompt.md
