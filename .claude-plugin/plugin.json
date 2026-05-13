@@ -1,0 +1,18 @@
+{
+  "name": "zenvibe",
+  "version": "0.1.0",
+  "description": "Pauses, reprises et compactages propres pour les sessions Claude Code. Sauvegarde l'état dans JOURNAL.md, automatise les checkpoints avant compaction, et réoriente Claude après.",
+  "author": {
+    "name": "Fred Fonteyne",
+    "email": "frederic.fonteyne@gmail.com"
+  },
+  "keywords": [
+    "workflow",
+    "context-management",
+    "compaction",
+    "journal",
+    "checkpoint",
+    "productivity"
+  ],
+  "license": "MIT"
+}
