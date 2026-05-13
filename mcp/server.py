@@ -5,7 +5,7 @@
 # ///
 """ZenVibe MCP server.
 
-Exposes three tools — `zen_pause`, `zen_resume`, `zen_compact` —
+Exposes three tools — `zenvibe_pause`, `zenvibe_resume`, `zenvibe_compact` —
 that mirror the ZenVibe slash commands for surfaces where slash commands
 are not available (Claude desktop app, claude.ai web with custom integrations).
 
@@ -25,7 +25,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("zen")
+mcp = FastMCP("zenvibe")
 
 # ---------------------------------------------------------------------------
 # Constants & helpers
@@ -205,7 +205,7 @@ def _numbered(items: list[str] | None) -> str:
 
 
 @mcp.tool()
-def zen_pause(
+def zenvibe_pause(
     project_path: str,
     summary: str,
     commit_message: str,
@@ -278,7 +278,7 @@ def zen_pause(
 
 
 @mcp.tool()
-def zen_resume(project_path: str) -> dict[str, Any]:
+def zenvibe_resume(project_path: str) -> dict[str, Any]:
     """Lit le contexte pour reprendre après une pause ou compaction.
 
     Workflow :
@@ -343,7 +343,7 @@ def zen_resume(project_path: str) -> dict[str, Any]:
 
 
 @mcp.tool()
-def zen_compact(
+def zenvibe_compact(
     project_path: str,
     summary: str,
     commit_message: str,
@@ -356,7 +356,7 @@ def zen_compact(
     Workflow :
     1. Commit + push de ce qui est commitable.
     2. Écrit une entrée *session-focused* en haut de docs/JOURNAL.md.
-    3. Lit .claude/zen.md (instructions custom) ou utilise un template
+    3. Lit .claude/zenvibe.md (instructions custom) ou utilise un template
        générique, puis renvoie la commande `/compact <instructions>`
        prête à coller.
 
@@ -389,7 +389,7 @@ def zen_compact(
     _prepend_to_journal(journal, "\n".join(parts))
 
     # Custom compact instructions per project (if any)
-    custom = repo / ".claude" / "zen.md"
+    custom = repo / ".claude" / "zenvibe.md"
     if custom.exists():
         raw = custom.read_text(encoding="utf-8")
     else:

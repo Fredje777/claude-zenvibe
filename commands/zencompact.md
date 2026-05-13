@@ -51,7 +51,7 @@ Garde ça serré. Le but est de préserver ce qui serait perdu dans la compactio
 
 ### 3. Construire les instructions pour `/compact`
 
-Cherche `.claude/zen.md` à la racine du projet. S'il existe, utilise son contenu **tel quel** comme instructions de compaction — ça permet à chaque projet de définir ses propres priorités.
+Cherche `.claude/zenvibe.md` à la racine du projet. S'il existe, utilise son contenu **tel quel** comme instructions de compaction — ça permet à chaque projet de définir ses propres priorités.
 
 S'il est absent, utilise ce template générique :
 
@@ -81,4 +81,4 @@ Remplace `<instructions>` par le texte réel de l'étape 3, sur une seule ligne 
 - **Ne lance jamais `/compact` toi-même.** Sors uniquement la commande pour que l'utilisateur la lance. `/compact` est une action UI que seul l'utilisateur peut déclencher.
 - Ne commit jamais de WIP cassé — alerte plutôt et laisse les fichiers en place.
 - Si `git status` est propre et que le journal couvre déjà l'état courant, saute proprement l'étape 1 et produis quand même l'étape 4.
-- Le fichier `.claude/zen.md` custom est optionnel par projet. Ne le crée pas automatiquement — lis-le seulement s'il existe.
+- Le fichier `.claude/zenvibe.md` custom est optionnel par projet. Ne le crée pas automatiquement — lis-le seulement s'il existe.

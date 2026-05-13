@@ -1,5 +1,6 @@
 {
-  "name": "zen",
+  "name": "zenvibe",
+  "displayName": "ZenVibe",
   "version": "0.1.0",
   "description": "Pauses, reprises et compactages propres pour les sessions Claude Code. Sauvegarde l'état dans JOURNAL.md, automatise les checkpoints avant compaction, et réoriente Claude après.",
   "author": {
