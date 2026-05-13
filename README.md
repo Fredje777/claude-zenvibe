@@ -22,11 +22,12 @@ Le principe est simple : **`docs/JOURNAL.md` est la source unique de vérité**.
 | `/zenvibe:resume` | Tu reviens d'une pause ou d'une compaction | Lit le JOURNAL + `CLAUDE.md`, résume l'état, propose la prochaine action, attend ton feu vert |
 | `/zenvibe:compact` | Tu veux compacter consciemment | Checkpoint léger (commit + push + journal session) puis sort la commande `/compact <instructions>` prête à coller |
 
-### Hook
+### Hooks
 
 | Événement | Action |
 |---|---|
 | `PreCompact` | Avant toute compaction (manuelle ou auto), Claude reçoit l'instruction de faire un checkpoint propre : commit, JOURNAL.md, push. Filet de sécurité si tu oublies de lancer `/zenvibe:compact` à temps. |
+| `SessionStart` | À l'ouverture d'une session (mode `startup` ou `compact`), si un `JOURNAL.md` récent (<14 jours) existe dans le projet, Claude affiche un mini-briefing 3-lignes au premier message — date de la dernière entrée + tâche en cours + rappel de `/zenvibe:resume`. Silencieux sur les projets sans JOURNAL ou avec un JOURNAL stale. |
 
 ---
 
@@ -46,7 +47,11 @@ Dans Claude Code, utilise la commande `/plugin` pour gérer les plugins.
 /plugin install https://github.com/<user>/zenvibe
 ```
 
-Une fois installé, les commandes `/zenvibe:pause`, `/zenvibe:resume` et `/zenvibe:compact` apparaissent dans `/help`, et le hook `PreCompact` se déclenche automatiquement à chaque compaction.
+Une fois installé, les commandes `/zenvibe:pause`, `/zenvibe:resume` et `/zenvibe:compact` apparaissent dans `/help`, le hook `PreCompact` se déclenche automatiquement à chaque compaction, et le hook `SessionStart` propose un mini-briefing à l'ouverture des sessions sur les projets qui ont un JOURNAL.md récent.
+
+### Prérequis
+
+- `python3` accessible dans le PATH (utilisé par le hook `SessionStart`). Préinstallé sur macOS et la plupart des Linux.
 
 ---
 
