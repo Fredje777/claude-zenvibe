@@ -56,20 +56,33 @@ Le principe est simple : **`docs/JOURNAL.md` est la source unique de vérité**.
 
 ## Installation
 
-### Pour Claude Code CLI + VS Code
+### Pour Claude Code CLI + VS Code + App desktop (en une fois)
 
+L'app desktop ne suit pas les symlinks pour la discovery des plugins, donc on installe en copiant le dossier dans `~/.claude/plugins/zenvibe/`. Pour une install locale depuis le dépôt cloné :
+
+```bash
+./scripts/sync-install.sh
 ```
-/plugin install /chemin/vers/zenvibe
-```
+
+Ce script copie le dossier dans `~/.claude/plugins/zenvibe/` (mirror rsync avec `--delete`). À relancer après chaque modif du source.
+
+Tu dois aussi enregistrer le plugin dans `~/.claude/plugins/installed_plugins.json` et l'activer dans `~/.claude/settings.json` (voir `expert-comptable@local` comme modèle), ou plus simplement utiliser `/plugin` dans Claude Code pour gérer l'installation.
+
+Une fois installé :
+- Les 3 slash commands apparaissent dans `/help` (terminal + VS Code)
+- Les hooks `PreCompact` et `SessionStart` se déclenchent automatiquement
+- Le plugin apparaît dans **Customize → Plugins personnels** de l'app desktop
 
 Une fois installé :
 - Les 3 slash commands apparaissent dans `/help`
 - Les hooks `PreCompact` et `SessionStart` se déclenchent automatiquement
 - Le MCP server `zenvibe` est aussi exposé (via `.mcp.json`) — utile si tu préfères l'interface MCP plutôt que les slash commands
 
-### Pour l'app desktop Claude.ai
+### Pour exposer aussi le MCP server dans l'app desktop
 
-Ajoute le MCP server dans `~/Library/Application Support/Claude/claude_desktop_config.json` :
+Le plugin est déjà visible dans la liste de l'app desktop après `sync-install.sh`, mais le MCP server (qui permet d'utiliser ZenVibe **comme un tool** depuis l'app, sans dépendre du système de plugins) demande une config en plus.
+
+Ajoute dans `~/Library/Application Support/Claude/claude_desktop_config.json` :
 
 ```json
 {
@@ -79,7 +92,7 @@ Ajoute le MCP server dans `~/Library/Application Support/Claude/claude_desktop_c
       "args": [
         "run",
         "--script",
-        "/chemin/vers/zenvibe/mcp/server.py"
+        "/Users/fred/.claude/plugins/zenvibe/mcp/server.py"
       ]
     }
   }
