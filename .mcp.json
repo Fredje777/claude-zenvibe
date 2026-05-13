@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "zenvibe": {
+    "zen": {
       "command": "uv",
       "args": [
         "run",

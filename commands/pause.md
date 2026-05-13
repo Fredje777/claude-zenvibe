@@ -78,7 +78,7 @@ Sors exactement un bloc court — pas de préambule, pas de récap du contenu du
 ✓ Push : <branche> → <remote>   (ou : "rien à committer")
 ✓ Journal : docs/JOURNAL.md
 
-Bonne pause. Au retour : /zenvibe:resume
+Bonne pause. Au retour : /zen:resume
 ```
 
 Si quelque chose a échoué (push refusé, journal non écrivable, fichiers WIP laissés), dis-le explicitement avec les fichiers concernés. Ne prétends jamais une réussite qui n'a pas eu lieu.

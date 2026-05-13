@@ -9,7 +9,7 @@
 set -euo pipefail
 
 SOURCE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-INSTALL_DIR="$HOME/.claude/plugins/zenvibe"
+INSTALL_DIR="$HOME/.claude/plugins/zen"
 
 if [[ ! -d "$SOURCE_DIR/.claude-plugin" ]]; then
   echo "✗ $SOURCE_DIR does not look like the ZenVibe source (no .claude-plugin/)." >&2
