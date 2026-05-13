@@ -28,4 +28,4 @@ Avant qu'elle ne se produise, fais un checkpoint propre :
 
 Si rien n'est à committer ou journaliser (conversation très courte, ou checkpoint déjà fait juste avant), dis-le simplement (`Rien à checkpointer.`) et laisse la compaction se faire.
 
-Une fois ce checkpoint terminé, la compaction technique va suivre. Au prochain message utilisateur après compaction, si tu as perdu le contexte, lis `docs/JOURNAL.md` et `CLAUDE.md` pour te réorienter — ou suggère à l'utilisateur de lancer `/zen-resume`.
+Une fois ce checkpoint terminé, la compaction technique va suivre. Au prochain message utilisateur après compaction, si tu as perdu le contexte, lis `docs/JOURNAL.md` et `CLAUDE.md` pour te réorienter — ou suggère à l'utilisateur de lancer `/zenresume`.

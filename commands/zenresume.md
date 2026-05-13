@@ -1,5 +1,5 @@
 ---
-name: zen-resume
+name: zenresume
 description: Réétablit le contexte après une pause ou une compaction. Lit docs/JOURNAL.md en entier, lit CLAUDE.md pour les conventions du projet, vérifie l'état Git, résume où en sont les choses, propose une prochaine action concrète et attend le feu vert explicite avant de toucher au code.
 argument-hint: ""
 allowed-tools:
