@@ -9,6 +9,10 @@ The user wants to compact the conversation. Make a clean checkpoint first, then 
 
 ## Workflow
 
+### 0. Check the working directory is a git repo
+
+Run `git rev-parse --is-inside-work-tree` once. If it fails, skip step 1 entirely, write only the journal entry, and mention "pas de repo git" in the confirmation.
+
 ### 1. Commit + push committable changes
 
 - `git status` and `git log -5 --oneline` first.
@@ -66,7 +70,7 @@ Pour compacter maintenant, copie-colle :
 /compact <instructions>
 ```
 
-Replace `<instructions>` with the actual text from step 3, on a single line (no internal newlines) so it can be pasted directly.
+Replace `<instructions>` with the actual text from step 3, on a single line (collapse any internal newlines into single spaces) so it can be pasted directly.
 
 ## Rules
 

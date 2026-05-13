@@ -9,6 +9,10 @@ The user is stepping away. Produce a thorough handoff so they (or you) can pick 
 
 ## Workflow
 
+### 0. Check the working directory is a git repo
+
+Run `git rev-parse --is-inside-work-tree` once. If it fails, the project is not under git: skip steps 1 and the "Git" section of step 3 entirely, write only the journal entry, and mention in the confirmation that no git checkpoint was made.
+
 ### 1. Commit + push everything committable
 
 - Run `git status` and `git diff --stat` to see what changed.
@@ -77,7 +81,7 @@ If anything failed (push refused, journal unwritable, WIP files left uncommitted
 
 ## Rules
 
-- Never commit files that look like secrets: `.env`, `*.key`, `*.pem`, `credentials*`, `secrets*`. Warn the user instead.
+- Never commit files that look like secrets: `.env*`, `*.key`, `*.pem`, `*.pfx`, `*.p12`, `id_rsa*`, `credentials*`, `secrets*`, `.npmrc` containing tokens, or anything else that looks sensitive. Trust the project's `.gitignore` first, but if something suspicious slips into the staging area, warn the user and unstage it.
 - Never force-push or skip hooks.
 - If `git status` is clean AND nothing meaningful happened this session, you may write a minimal journal entry ("session sans changements") and exit. Do not fabricate work.
 - Match the journal's existing language. Default to French if the project is in French (look at CLAUDE.md or recent commits).

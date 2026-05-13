@@ -32,19 +32,21 @@ Le principe est simple : **`docs/JOURNAL.md` est la source unique de vérité**.
 
 ## Installation
 
+Dans Claude Code, utilise la commande `/plugin` pour gérer les plugins.
+
 ### Depuis ce dépôt (local)
 
-```bash
-claude plugin install /chemin/vers/zenvibe
+```
+/plugin install /chemin/vers/zenvibe
 ```
 
-### Depuis un dépôt git
+### Depuis un dépôt git (une fois publié)
 
-```bash
-claude plugin install https://github.com/<user>/zenvibe
+```
+/plugin install https://github.com/<user>/zenvibe
 ```
 
-Une fois installé, les commandes `/zenvibe:pause`, `/zenvibe:resume` et `/zenvibe:compact` apparaissent dans `/help`, et le hook `PreCompact` se déclenche automatiquement.
+Une fois installé, les commandes `/zenvibe:pause`, `/zenvibe:resume` et `/zenvibe:compact` apparaissent dans `/help`, et le hook `PreCompact` se déclenche automatiquement à chaque compaction.
 
 ---
 
