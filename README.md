@@ -14,7 +14,7 @@ Le principe est simple : **`docs/JOURNAL.md` est la source unique de vérité**.
 
 ## Composants
 
-### Skills (commandes slash)
+### Slash commands
 
 | Commande | Quand | Action |
 |---|---|---|
