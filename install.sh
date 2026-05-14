@@ -54,6 +54,7 @@ main() {
     echo "✓ Preflight only — no changes made."
     exit 0
   fi
+  confirm_install
 }
 
 parse_args() {
@@ -136,6 +137,30 @@ preflight() {
     done
     echo ""
   fi
+}
+
+# Ask the user "yes/no" before any file change. Skipped if --yes.
+confirm_install() {
+  if $MODE_ASSUME_YES; then
+    return 0
+  fi
+  echo "About to install:"
+  echo "  • Copy plugin files to: $INSTALL_DIR"
+  echo "  • Register plugin in:   $CC_INSTALLED_PLUGINS"
+  echo "  • Enable plugin in:     $CC_SETTINGS"
+  if [[ -n "$DESKTOP_CONFIG" ]] && ! $MODE_CLI_ONLY && [[ -d "$(dirname "$DESKTOP_CONFIG")" ]]; then
+    echo "  • Add MCP server to:    $DESKTOP_CONFIG"
+  else
+    echo "  • Desktop MCP:          (skipped)"
+  fi
+  echo ""
+  echo "All JSON files are backed up before being edited."
+  echo ""
+  read -r -p "Proceed? [y/N] " ans
+  case "$ans" in
+    y|Y|yes|YES) return 0 ;;
+    *) echo "Aborted."; exit 0 ;;
+  esac
 }
 
 # Detect the operating system. Sets the OS variable to one of: macos, linux, windows, unknown.
