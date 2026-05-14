@@ -6,7 +6,7 @@
 """ZenVibe MCP server.
 
 Exposes three tools — `zenvibe_pause`, `zenvibe_resume`, `zenvibe_checkpoint` —
-that mirror the ZenVibe slash commands for surfaces where slash commands
+that mirror the ZenVibe slash commands on surfaces where slash commands
 are not available (Claude desktop app, claude.ai web with custom integrations).
 
 Design:
@@ -14,6 +14,8 @@ Design:
 - This server does the IO (git operations, file read/write).
 - Tools take structured arguments produced by the LLM; the server validates,
   performs the side effects, and returns a structured result.
+- Output language is controlled by the caller via a `language` argument on
+  each tool (currently "en" or "fr"). Default: "en".
 """
 from __future__ import annotations
 
@@ -42,14 +44,6 @@ SUSPICIOUS_PATTERNS = [
     re.compile(r"secret", re.IGNORECASE),
     re.compile(r"\.npmrc$"),
 ]
-
-GENERIC_COMPACT_INSTRUCTIONS = (
-    "Garde en détail : les conventions du projet (commits, sécurité données, "
-    "validations obligatoires), l'état d'avancement courant, les décisions "
-    "techniques prises sur l'architecture et l'API, et toute question ouverte "
-    "non résolue. Tu peux résumer brièvement les itérations de code et les "
-    "tâtonnements."
-)
 
 # ---------------------------------------------------------------------------
 # Smart-bilingual messages
@@ -184,7 +178,7 @@ def _do_git_checkpoint(
     }
 
     if not _is_git_repo(repo):
-        result["warnings"].append("Pas un repo git — étape git sautée.")
+        result["warnings"].append("Not a git repo — git step skipped.")
         return result
 
     result["is_git_repo"] = True
@@ -203,7 +197,7 @@ def _do_git_checkpoint(
         candidates.append(path)
 
     if not candidates:
-        result["warnings"].append("git status propre — rien à committer.")
+        result["warnings"].append("Working tree clean — nothing to commit.")
         return result
 
     safe, suspicious = _filter_suspicious(candidates)
@@ -211,7 +205,7 @@ def _do_git_checkpoint(
         result["skipped_suspicious"] = suspicious
 
     if not safe:
-        result["warnings"].append("Tous les fichiers modifiés ressemblent à des secrets — aucun commit fait.")
+        result["warnings"].append("All modified files look like secrets — nothing committed.")
         return result
 
     add = _git(["add", "--", *safe], repo)
@@ -244,7 +238,7 @@ def _do_git_checkpoint(
             else:
                 result["errors"].append(f"git push failed: {push.stderr.strip()}")
     else:
-        result["warnings"].append("Pas de remote configuré — pas de push.")
+        result["warnings"].append("No remote configured — no push.")
 
     return result
 
@@ -384,7 +378,7 @@ def zenvibe_resume(project_path: str) -> dict[str, Any]:
         except OSError as e:
             errors.append(f"Cannot read journal: {e}")
     else:
-        errors.append("Aucun JOURNAL.md trouvé (ni docs/JOURNAL.md ni JOURNAL.md racine).")
+        errors.append("No JOURNAL.md found (neither docs/JOURNAL.md nor root JOURNAL.md).")
 
     # CLAUDE.md
     claude_md_content = None
