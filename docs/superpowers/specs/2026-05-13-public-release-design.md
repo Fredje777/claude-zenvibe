@@ -286,13 +286,71 @@ Symmetric to install:
 
 It does NOT delete the user's `docs/JOURNAL.md` files in their projects — those are user data.
 
-### 6.6 Cross-platform note (v0.1 stance)
+### 6.6 Cross-platform install procedure
 
-- **macOS:** full support, both CC CLI and desktop.
-- **Linux:** CC CLI install supported; desktop section skipped (no Claude desktop app on Linux as of this writing).
-- **Windows:** untested; installer prints a clear "Windows support is community-best-effort" notice and skips desktop config. CC CLI parts likely work via WSL or native Git Bash.
+The install procedure is **always documented as three distinct paths** — macOS, Linux, Windows — both in `docs/INSTALL.md` (long form) and in the README "Quick start" (short form). The user must never have to *guess* which lines apply to them.
 
-This is documented in README "Requirements" and in `docs/INSTALL.md`.
+#### 6.6.1 macOS (primary target — fully automated)
+
+```bash
+git clone https://github.com/Fredje777/claude-zenvibe.git
+cd claude-zenvibe
+./install.sh
+```
+
+The installer:
+- Detects Apple Silicon vs Intel (resolves `uv` via `command -v` so either Homebrew prefix works).
+- Configures both CC CLI/VS Code AND the Claude desktop app MCP.
+- Prints a final summary with one line per surface and what to restart.
+
+Prerequisites: `git`, `python3`, `uv` (recommended; `brew install uv`). The installer's preflight tells the user exactly what to install if anything is missing, with the exact `brew install …` command.
+
+#### 6.6.2 Linux (CC CLI + VS Code only)
+
+```bash
+git clone https://github.com/Fredje777/claude-zenvibe.git
+cd claude-zenvibe
+./install.sh
+```
+
+The installer:
+- Detects Linux via `uname` and skips the Claude desktop app section with a clear warning ("No Claude desktop app on Linux; skipping desktop MCP config").
+- CC CLI / VS Code install proceeds normally.
+
+Prerequisites: `git`, `python3`. `uv` is optional on Linux (the MCP server section is skipped anyway with no desktop app to use it from). The preflight notes this and doesn't fail on missing `uv`.
+
+#### 6.6.3 Windows — two paths
+
+Native bash is not part of Windows, so `install.sh` does not run in PowerShell or cmd.exe. Two supported options:
+
+**(a) WSL (recommended).** Inside a WSL Ubuntu/Debian shell, follow the **Linux** procedure above. The plugin runs against the WSL-side Claude Code installation. If the user wants the plugin to also work with Claude Code installed on the Windows side (outside WSL), they need to manually re-run the install or use the manual procedure below.
+
+**(b) Manual install via Git Bash.** Open Git Bash (ships with Git for Windows). Run:
+
+```bash
+git clone https://github.com/Fredje777/claude-zenvibe.git
+cd claude-zenvibe
+./install.sh
+```
+
+The installer detects Windows via `uname` (returns something like `MINGW64_NT-…`), prints a "Windows is community-best-effort" notice, and:
+- Resolves `~/.claude/` to `%USERPROFILE%/.claude/` (Git Bash handles this).
+- Resolves the desktop config to `%APPDATA%/Claude/claude_desktop_config.json` if the desktop app is present.
+- Otherwise skips desktop section.
+
+If `install.sh` fails on Windows, `docs/INSTALL.md` has a fully manual step-by-step (copy files, edit two JSONs) as fallback.
+
+Prerequisites: `git` (Git for Windows includes Git Bash), `python3` (https://www.python.org/), `uv` (https://docs.astral.sh/uv/getting-started/installation/).
+
+#### 6.6.4 Path quick reference
+
+| Surface | macOS | Linux | Windows |
+|---|---|---|---|
+| Plugin install dir | `~/.claude/plugins/zenvibe/` | `~/.claude/plugins/zenvibe/` | `%USERPROFILE%\.claude\plugins\zenvibe\` |
+| CC settings | `~/.claude/settings.json` | `~/.claude/settings.json` | `%USERPROFILE%\.claude\settings.json` |
+| Desktop MCP config | `~/Library/Application Support/Claude/claude_desktop_config.json` | _(n/a)_ | `%APPDATA%\Claude\claude_desktop_config.json` |
+
+This table appears verbatim in `docs/INSTALL.md`.
 
 ### 6.7 Publication workflow (separate from installer)
 
@@ -336,7 +394,19 @@ After push:
 The user's directive: "documente un maximum". Concretely:
 
 - **`README.md`** — primary entry point. Audience-aware intro (Draft D) + comprehensive sections (Quick start, What's in the box, Surface coverage, Installation summary, Project journal explanation, Configuration, Architecture, Troubleshooting pointer, License). ~250–400 lines.
-- **`docs/INSTALL.md`** — extended install reference: prerequisites in detail, surface-by-surface manual install (for users who want to understand or whose `install.sh` fails), troubleshooting common issues, uninstall procedure, FAQ. Linked from README in 2–3 places.
+- **`docs/INSTALL.md`** — extended install reference, structured into the following top-level sections:
+  1. **Prerequisites** (table per OS: required tools, install commands)
+  2. **macOS — quick install** (3-liner + what to expect)
+  3. **Linux — quick install** (3-liner + note on desktop app unavailability)
+  4. **Windows — install via WSL** (recommended path, 4-liner)
+  5. **Windows — manual install via Git Bash** (fallback, 4-liner)
+  6. **What `install.sh` does, step by step** (transparency — show the 5 actions)
+  7. **Manual install (fallback, all platforms)** — surface-by-surface manual steps if `install.sh` failed: copy files, edit `installed_plugins.json`, edit `settings.json`, edit `claude_desktop_config.json`
+  8. **Verifying the install** — what `/help`, `/plugin`, and the desktop "Customize" panel should show
+  9. **Troubleshooting** — common failure modes with diagnoses (plugin not in `/help`, MCP not appearing in desktop, `uv: command not found`, etc.)
+  10. **Uninstalling** — using `uninstall.sh` + manual cleanup if needed
+  11. **FAQ** — short answers to ~6 expected questions
+  Linked from README in at least 3 places (Quick start, Troubleshooting pointer, Uninstall pointer).
 - **`docs/web-project.md`** — claude.ai Project preset (already exists; translated and slightly expanded).
 - **`CHANGELOG.md`** — keep-a-changelog format, single 0.1.0 entry.
 - **Inline comments** — `install.sh`, `uninstall.sh`, `hooks/scripts/session-start-briefing.py`, and `mcp/server.py` get block comments explaining intent, not just mechanics.
@@ -362,6 +432,7 @@ No man pages, no Sphinx docs site, no per-API reference — overkill for v0.1.
 
 This design was iterated and approved across:
 - 2026-05-13: initial three sections (translation plan, intro text draft D, repo polish).
-- 2026-05-13 (update): added §6 Installer + §8 Documentation scope after explicit request for hassle-free install with preflight checks and maximum documentation.
+- 2026-05-13 (update 1): added §6 Installer + §8 Documentation scope after explicit request for hassle-free install with preflight checks and maximum documentation.
+- 2026-05-13 (update 2): expanded §6.6 into a proper per-OS install procedure (macOS / Linux / Windows-WSL / Windows-Git-Bash) with a path quick-reference table, after explicit request for clarity per platform. INSTALL.md outline in §8 expanded to 11 sections.
 
 Next step: writing-plans skill → implementation plan → execution.
