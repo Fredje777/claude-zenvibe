@@ -352,19 +352,19 @@ def zenvibe_pause(
 
 @mcp.tool()
 def zenvibe_resume(project_path: str) -> dict[str, Any]:
-    """Lit le contexte pour reprendre après une pause ou compaction.
+    """Read the context to resume after a pause or compaction.
 
-    Workflow :
-    1. Lit docs/JOURNAL.md (ou JOURNAL.md racine) en entier.
-    2. Lit CLAUDE.md à la racine s'il existe.
-    3. Récupère l'état git (status, log -5, branche).
-    4. Retourne tout en structuré pour que le LLM compose le briefing.
+    Workflow:
+    1. Read docs/JOURNAL.md (or JOURNAL.md at root) in full.
+    2. Read CLAUDE.md at the project root if present.
+    3. Capture git state (status, log -5, branch).
+    4. Return everything structured so Claude composes the briefing.
 
     Args:
-        project_path: Chemin absolu (ou ~) du projet.
+        project_path: Absolute (or ~) project path.
 
     Returns:
-        Un dict avec `journal_content`, `claude_md_content`, `git_status`,
+        A dict with `journal_content`, `claude_md_content`, `git_status`,
         `recent_commits` (list), `branch`, `errors`.
     """
     repo = _resolve_repo(project_path)
