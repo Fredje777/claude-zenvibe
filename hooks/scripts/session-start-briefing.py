@@ -4,7 +4,7 @@
 Silent unless:
   - source is "startup" or "compact" (not "resume" or "clear")
   - cwd contains docs/JOURNAL.md or JOURNAL.md
-  - that journal was modified in the last 14 days
+  - that journal was modified within the last 14 days
 
 Otherwise emits nothing, so non-ZenVibe projects stay completely quiet.
 """

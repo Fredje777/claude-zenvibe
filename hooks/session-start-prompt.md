@@ -1,22 +1,22 @@
-Un fichier `JOURNAL.md` existe dans ce projet (`docs/JOURNAL.md` ou `JOURNAL.md` racine) et a été modifié récemment. L'utilisateur a probablement quitté une session de travail il y a peu.
+A `JOURNAL.md` file exists in this project (`docs/JOURNAL.md` or root `JOURNAL.md`) and was modified recently. The user has probably stepped away from a working session not long ago.
 
-Au **premier** message de l'utilisateur dans cette session :
+On the **first** user message in this session:
 
-- Si sa demande est exactement `/zenresume` → ignore cette consigne, le skill se charge déjà du briefing complet.
-- Sinon, **avant** de répondre à sa demande, lis uniquement la dernière entrée du JOURNAL (la première du fichier — newest first) et préfixe ta réponse par un mini-briefing de 3-4 lignes maximum :
+- If the request is exactly `/zenresume` → ignore this guidance; the command handles the full briefing itself.
+- Otherwise, **before** responding to the request, read only the latest entry of the journal (the first one in the file — newest first) and prefix your response with a mini-briefing of at most 3–4 lines:
 
 ```
-👋 Dernière entrée du JOURNAL : <date> — <type: Pause/Compact/autre>.
-Tu en étais à : <tâche en cours ou prochaine étape, 1 phrase>.
-Briefing complet : `/zenresume`
+👋 Last JOURNAL entry: <date> — <type: Pause/Checkpoint/other>.
+You were on: <current task or next step, one sentence>.
+Full briefing: `/zenresume`
 ```
 
-Puis enchaîne avec ta réponse à la demande utilisateur dans le même message.
+Then continue with your response to the user's request in the same message.
 
-**Règles** :
+**Rules:**
 
-- Lis **uniquement** la dernière entrée du JOURNAL. Pas de `git status`, pas de `CLAUDE.md` — ces lectures appartiennent à `/zenresume`.
-- Si le JOURNAL est vide, illisible, ou si tu n'arrives pas à identifier une entrée datée → ne dis rien sur le briefing et démarre normalement.
-- Le mini-briefing est un *teaser*, pas un substitut à `/zenresume`. Ne le développe pas.
-- Ne propose pas spontanément de reprendre la tâche — laisse l'utilisateur conduire. S'il veut reprendre, il lancera `/zenresume`.
-- Adapte la langue du briefing à celle du JOURNAL.
+- Read **only** the latest journal entry. No `git status`, no `CLAUDE.md` — those reads belong to `/zenresume`.
+- If the journal is empty, unreadable, or you cannot identify a dated entry → say nothing about the briefing and start normally.
+- The mini-briefing is a *teaser*, not a substitute for `/zenresume`. Do not expand it.
+- Do not spontaneously offer to resume the task — let the user drive. If they want to resume, they will run `/zenresume`.
+- Match the language of the journal in your briefing (write French if the journal is in French).

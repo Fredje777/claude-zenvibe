@@ -6,7 +6,7 @@
 """ZenVibe MCP server.
 
 Exposes three tools — `zenvibe_pause`, `zenvibe_resume`, `zenvibe_checkpoint` —
-that mirror the ZenVibe slash commands for surfaces where slash commands
+that mirror the ZenVibe slash commands on surfaces where slash commands
 are not available (Claude desktop app, claude.ai web with custom integrations).
 
 Design:
@@ -14,6 +14,8 @@ Design:
 - This server does the IO (git operations, file read/write).
 - Tools take structured arguments produced by the LLM; the server validates,
   performs the side effects, and returns a structured result.
+- Output language is controlled by the caller via a `language` argument on
+  each tool (currently "en" or "fr"). Default: "en".
 """
 from __future__ import annotations
 
@@ -21,7 +23,7 @@ import datetime
 import re
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
 
@@ -43,13 +45,67 @@ SUSPICIOUS_PATTERNS = [
     re.compile(r"\.npmrc$"),
 ]
 
-GENERIC_COMPACT_INSTRUCTIONS = (
-    "Garde en détail : les conventions du projet (commits, sécurité données, "
-    "validations obligatoires), l'état d'avancement courant, les décisions "
-    "techniques prises sur l'architecture et l'API, et toute question ouverte "
-    "non résolue. Tu peux résumer brièvement les itérations de code et les "
-    "tâtonnements."
-)
+# ---------------------------------------------------------------------------
+# Smart-bilingual messages
+# ---------------------------------------------------------------------------
+#
+# All user-visible strings written by the MCP tools route through `_t(key, lang)`.
+# Add a new pair (en + fr) here, then reference it by key in the tools.
+#
+# Claude (the caller) is responsible for deciding the language from project
+# signals (CLAUDE.md content, existing journal language) and passing it via
+# the `language` argument of each tool. Default is English.
+
+MESSAGES: dict[str, dict[str, str]] = {
+    "en": {
+        "safe_to_compact": "🧘 It's safe to compact now. Type /compact to proceed.",
+        "checkpoint_partial": "⚠ Partial checkpoint — fix the git errors before compacting.",
+        "pause_heading": "Pause",
+        "checkpoint_heading": "Checkpoint",
+        "pause_note_prefix": "> Pause note: ",
+        "summary_prefix": "**Summary:** ",
+        "completed_section": "### Completed tasks (current iteration)",
+        "current_task_section": "### Current task",
+        "remaining_section": "### Remaining tasks (in order)",
+        "decisions_section": "### Technical decisions made this session",
+        "open_questions_section": "### Open questions",
+        "files_touched_section": "### Files touched",
+        "next_step_section": "### Clear next step",
+        "git_section": "### Git",
+        "git_branch_prefix": "- Branch: ",
+        "git_last_commit_prefix": "- Last commit: ",
+        "git_none": "- _(not a git repo or nothing to commit)_",
+        "attention_section": "### Attention points for the resume",
+        "session_done_section": "### Done this session",
+    },
+    "fr": {
+        "safe_to_compact": "🧘 Tu peux compacter sans risque. Tape /compact pour lancer.",
+        "checkpoint_partial": "⚠ Checkpoint partiel — corrige les erreurs git avant de compacter.",
+        "pause_heading": "Pause",
+        "checkpoint_heading": "Checkpoint",
+        "pause_note_prefix": "> Note de pause : ",
+        "summary_prefix": "**Résumé :** ",
+        "completed_section": "### Tâches terminées (itération en cours)",
+        "current_task_section": "### Tâche en cours",
+        "remaining_section": "### Tâches restantes (par ordre)",
+        "decisions_section": "### Décisions techniques prises cette session",
+        "open_questions_section": "### Questions ouvertes",
+        "files_touched_section": "### Fichiers touchés",
+        "next_step_section": "### Prochaine étape claire",
+        "git_section": "### Git",
+        "git_branch_prefix": "- Branche : ",
+        "git_last_commit_prefix": "- Dernier commit : ",
+        "git_none": "- _(pas de repo git ou rien à committer)_",
+        "attention_section": "### Points d'attention pour la reprise",
+        "session_done_section": "### Fait dans cette session",
+    },
+}
+
+
+def _t(key: str, language: str) -> str:
+    """Resolve a localized message. Falls back to English on unknown language."""
+    lang_dict = MESSAGES.get(language) or MESSAGES["en"]
+    return lang_dict[key]  # KeyError on unknown key — caller bug
 
 
 def _resolve_repo(project_path: str) -> Path:
@@ -122,7 +178,7 @@ def _do_git_checkpoint(
     }
 
     if not _is_git_repo(repo):
-        result["warnings"].append("Pas un repo git — étape git sautée.")
+        result["warnings"].append("Not a git repo — git step skipped.")
         return result
 
     result["is_git_repo"] = True
@@ -141,7 +197,7 @@ def _do_git_checkpoint(
         candidates.append(path)
 
     if not candidates:
-        result["warnings"].append("git status propre — rien à committer.")
+        result["warnings"].append("Working tree clean — nothing to commit.")
         return result
 
     safe, suspicious = _filter_suspicious(candidates)
@@ -149,7 +205,7 @@ def _do_git_checkpoint(
         result["skipped_suspicious"] = suspicious
 
     if not safe:
-        result["warnings"].append("Tous les fichiers modifiés ressemblent à des secrets — aucun commit fait.")
+        result["warnings"].append("All modified files look like secrets — nothing committed.")
         return result
 
     add = _git(["add", "--", *safe], repo)
@@ -182,7 +238,7 @@ def _do_git_checkpoint(
             else:
                 result["errors"].append(f"git push failed: {push.stderr.strip()}")
     else:
-        result["warnings"].append("Pas de remote configuré — pas de push.")
+        result["warnings"].append("No remote configured — no push.")
 
     return result
 
@@ -216,28 +272,32 @@ def zenvibe_pause(
     open_questions: list[str],
     attention_points: list[str] | None = None,
     note: str | None = None,
+    language: Literal["en", "fr"] = "en",
 ) -> dict[str, Any]:
-    """Sauvegarde l'état de la session avant une absence de plusieurs heures.
+    """Save session state before stepping away for hours.
 
-    Workflow :
-    1. Commit + push de ce qui est commitable (fichiers sensibles écartés).
-    2. Écrit une entrée détaillée en haut de docs/JOURNAL.md.
-    3. Retourne un résumé des actions effectuées.
+    Workflow:
+    1. Commit + push committable files (skipping suspicious paths).
+    2. Write a detailed entry at the top of docs/JOURNAL.md.
+    3. Return a summary of actions taken.
 
     Args:
-        project_path: Chemin absolu (ou ~) du projet sur lequel agir.
-        summary: Résumé en une phrase de ce qu'on a fait cette session.
-        commit_message: Message de commit à utiliser (suit la convention du projet).
-        completed: Liste des tâches terminées dans cette itération.
-        current_task: Tâche en cours et son état précis (1 phrase).
-        remaining: Tâches restantes par ordre de priorité.
-        decisions: Décisions techniques prises cette session.
-        open_questions: Questions ouvertes à poser à l'utilisateur.
-        attention_points: Optionnel — refactos, code smells, WIP à reprendre.
-        note: Optionnel — note libre de pause fournie par l'utilisateur.
+        project_path: Absolute (or ~) path of the project to act on.
+        summary: One-sentence summary of what was done this session.
+        commit_message: Commit message to use (follow project convention).
+        completed: List of completed tasks in the current iteration.
+        current_task: Current task and its precise state (one sentence).
+        remaining: Remaining tasks in priority order.
+        decisions: Technical decisions made this session.
+        open_questions: Open questions for the user.
+        attention_points: Optional — refactors, code smells, WIP to resume.
+        note: Optional — free-form pause note provided by the user.
+        language: Output language for the journal entry ("en" or "fr").
+            The caller (Claude) decides based on project signals (CLAUDE.md
+            language, existing journal language). Defaults to "en".
 
     Returns:
-        Un dict avec `commit_sha`, `pushed`, `journal_path`, `branch`,
+        A dict with `commit_sha`, `pushed`, `journal_path`, `branch`,
         `errors`, `warnings`, `skipped_suspicious`.
     """
     repo = _resolve_repo(project_path)
@@ -246,27 +306,34 @@ def zenvibe_pause(
     journal = _find_or_create_journal(repo)
     now = _now()
 
-    parts = [f"## {now} — Pause"]
+    parts = [f"## {now} — {_t('pause_heading', language)}"]
     if note:
-        parts.append(f"\n> Note de pause : {note}")
-    parts.append(f"\n**Résumé :** {summary}")
-    parts.append("\n### Tâches terminées (itération en cours)\n" + _bullets(completed))
-    parts.append("\n### Tâche en cours\n- " + current_task)
-    parts.append("\n### Tâches restantes (par ordre)\n" + _numbered(remaining))
-    parts.append("\n### Décisions techniques prises cette session\n" + _bullets(decisions))
-    parts.append("\n### Questions ouvertes\n" + _bullets(open_questions))
+        parts.append(f"\n{_t('pause_note_prefix', language)}{note}")
+    parts.append(f"\n{_t('summary_prefix', language)}{summary}")
+    parts.append(f"\n{_t('completed_section', language)}\n" + _bullets(completed))
+    parts.append(f"\n{_t('current_task_section', language)}\n- " + current_task)
+    parts.append(f"\n{_t('remaining_section', language)}\n" + _numbered(remaining))
+    parts.append(f"\n{_t('decisions_section', language)}\n" + _bullets(decisions))
+    parts.append(f"\n{_t('open_questions_section', language)}\n" + _bullets(open_questions))
 
     git_lines = []
     if git_result["branch"]:
-        git_lines.append(f"- Branche : {git_result['branch']}")
+        git_lines.append(
+            f"{_t('git_branch_prefix', language)}{git_result['branch']}"
+        )
     if git_result["commit_sha"]:
-        git_lines.append(f"- Dernier commit : {git_result['commit_sha']} {commit_message}")
+        git_lines.append(
+            f"{_t('git_last_commit_prefix', language)}"
+            f"{git_result['commit_sha']} {commit_message}"
+        )
     if not git_lines:
-        git_lines.append("- _(pas de repo git ou rien à committer)_")
-    parts.append("\n### Git\n" + "\n".join(git_lines))
+        git_lines.append(_t("git_none", language))
+    parts.append(f"\n{_t('git_section', language)}\n" + "\n".join(git_lines))
 
     if attention_points:
-        parts.append("\n### Points d'attention pour la reprise\n" + _bullets(attention_points))
+        parts.append(
+            f"\n{_t('attention_section', language)}\n" + _bullets(attention_points)
+        )
 
     entry = "\n".join(parts)
     _prepend_to_journal(journal, entry)
@@ -279,19 +346,19 @@ def zenvibe_pause(
 
 @mcp.tool()
 def zenvibe_resume(project_path: str) -> dict[str, Any]:
-    """Lit le contexte pour reprendre après une pause ou compaction.
+    """Read the context to resume after a pause or compaction.
 
-    Workflow :
-    1. Lit docs/JOURNAL.md (ou JOURNAL.md racine) en entier.
-    2. Lit CLAUDE.md à la racine s'il existe.
-    3. Récupère l'état git (status, log -5, branche).
-    4. Retourne tout en structuré pour que le LLM compose le briefing.
+    Workflow:
+    1. Read docs/JOURNAL.md (or JOURNAL.md at root) in full.
+    2. Read CLAUDE.md at the project root if present.
+    3. Capture git state (status, log -5, branch).
+    4. Return everything structured so Claude composes the briefing.
 
     Args:
-        project_path: Chemin absolu (ou ~) du projet.
+        project_path: Absolute (or ~) project path.
 
     Returns:
-        Un dict avec `journal_content`, `claude_md_content`, `git_status`,
+        A dict with `journal_content`, `claude_md_content`, `git_status`,
         `recent_commits` (list), `branch`, `errors`.
     """
     repo = _resolve_repo(project_path)
@@ -311,7 +378,7 @@ def zenvibe_resume(project_path: str) -> dict[str, Any]:
         except OSError as e:
             errors.append(f"Cannot read journal: {e}")
     else:
-        errors.append("Aucun JOURNAL.md trouvé (ni docs/JOURNAL.md ni JOURNAL.md racine).")
+        errors.append("No JOURNAL.md found (neither docs/JOURNAL.md nor root JOURNAL.md).")
 
     # CLAUDE.md
     claude_md_content = None
@@ -350,29 +417,32 @@ def zenvibe_checkpoint(
     decisions: list[str],
     files_touched: list[str],
     next_step: str,
+    language: Literal["en", "fr"] = "en",
 ) -> dict[str, Any]:
-    """Sauvegarde un checkpoint propre — sans compacter.
+    """Save a clean checkpoint — without compacting.
 
-    Workflow :
-    1. Commit + push de ce qui est commitable.
-    2. Écrit une entrée *session-focused* en haut de docs/JOURNAL.md.
-    3. Retourne un message confirmant que la compaction est sûre.
+    Workflow:
+    1. Commit + push committable changes.
+    2. Write a session-focused entry at the top of docs/JOURNAL.md.
+    3. Return a message confirming it is safe to compact.
 
-    L'utilisateur reste seul à décider QUAND taper `/compact`. Claude Code
-    exclut explicitement `/compact` du tool `SlashCommand`, donc on ne
-    déclenche jamais la compaction nous-mêmes.
+    The user remains the sole decider of WHEN to type `/compact`. Claude Code
+    explicitly excludes `/compact` from its `SlashCommand` tool, so we never
+    trigger compaction ourselves.
 
     Args:
-        project_path: Chemin du projet.
-        summary: Résumé en une phrase de ce qu'on a fait cette session.
-        commit_message: Message de commit.
-        decisions: Décisions techniques de la session.
-        files_touched: Fichiers principaux touchés.
-        next_step: Prochaine étape claire (1 ligne actionnable).
+        project_path: Project path.
+        summary: One-sentence summary of what was done this session.
+        commit_message: Commit message.
+        decisions: Technical decisions made this session.
+        files_touched: Main files touched.
+        next_step: Clear next step (one actionable line).
+        language: Output language for the journal entry ("en" or "fr").
+            Defaults to "en".
 
     Returns:
-        Un dict avec `safe_to_compact` (bool), `next_step_message`, plus le
-        résultat git et le chemin du journal.
+        A dict with `safe_to_compact` (bool), `next_step_message`, plus the
+        git result and the journal path.
     """
     repo = _resolve_repo(project_path)
     git_result = _do_git_checkpoint(repo, commit_message)
@@ -381,23 +451,20 @@ def zenvibe_checkpoint(
     now = _now()
 
     parts = [
-        f"## {now} — Checkpoint",
-        f"\n**Résumé :** {summary}",
-        "\n### Fait dans cette session\n- " + summary,
-        "\n### Décisions techniques\n" + _bullets(decisions),
-        "\n### Fichiers touchés\n" + _bullets(files_touched),
-        "\n### Prochaine étape claire\n- " + next_step,
+        f"## {now} — {_t('checkpoint_heading', language)}",
+        f"\n{_t('summary_prefix', language)}{summary}",
+        f"\n{_t('session_done_section', language)}\n- " + summary,
+        f"\n{_t('decisions_section', language)}\n" + _bullets(decisions),
+        f"\n{_t('files_touched_section', language)}\n" + _bullets(files_touched),
+        f"\n{_t('next_step_section', language)}\n- " + next_step,
     ]
     _prepend_to_journal(journal, "\n".join(parts))
 
-    # Checkpoint is "safe" only if there were no git errors
     safe = not git_result["errors"]
     if safe:
-        next_step_message = "🧘 It's safe to compact now. Type /compact to proceed."
+        next_step_message = _t("safe_to_compact", language)
     else:
-        next_step_message = (
-            "⚠ Checkpoint partiel — corrige les erreurs git avant de compacter."
-        )
+        next_step_message = _t("checkpoint_partial", language)
 
     return {
         "journal_path": str(journal.relative_to(repo)),
