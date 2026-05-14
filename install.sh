@@ -49,6 +49,11 @@ main() {
     echo "Desktop config: (not applicable on $OS)"
   fi
   echo ""
+  preflight
+  if $MODE_CHECK_ONLY; then
+    echo "✓ Preflight only — no changes made."
+    exit 0
+  fi
 }
 
 parse_args() {
@@ -62,6 +67,75 @@ parse_args() {
     esac
     shift
   done
+}
+
+# Tracks accumulated preflight failures
+PREFLIGHT_HARD_FAIL=false
+PREFLIGHT_WARNINGS=()
+
+# Print ✓ if command exists, ✗ if hard-required and missing, ⚠ if soft.
+check_command() {
+  local cmd="$1"
+  local hint="$2"
+  local severity="$3"  # "required" or "recommended"
+  if command -v "$cmd" >/dev/null 2>&1; then
+    printf "  ✓ %-10s\n" "$cmd"
+  else
+    if [[ "$severity" == "required" ]]; then
+      printf "  ✗ %-10s  required — install: %s\n" "$cmd" "$hint"
+      PREFLIGHT_HARD_FAIL=true
+    else
+      printf "  ⚠ %-10s  recommended — install: %s\n" "$cmd" "$hint"
+      PREFLIGHT_WARNINGS+=("$cmd is missing — $hint")
+    fi
+  fi
+}
+
+preflight() {
+  echo "Preflight checks:"
+
+  # Required everywhere
+  check_command git    "https://git-scm.com/  (or: brew install git / apt install git)" required
+  check_command python3 "https://www.python.org/  (or: brew install python / apt install python3)" required
+  check_command rsync  "(usually pre-installed; brew install rsync / apt install rsync if not)" required
+
+  # Recommended for desktop MCP
+  if ! $MODE_CLI_ONLY; then
+    check_command uv "https://docs.astral.sh/uv/  (or: brew install uv)" recommended
+  fi
+
+  # Claude Code CLI presence
+  if [[ -d "$HOME/.claude" ]]; then
+    printf "  ✓ %-30s (Claude Code CLI detected)\n" "~/.claude/"
+  else
+    printf "  ✗ %-30s install Claude Code first: https://claude.com/code\n" "~/.claude/"
+    PREFLIGHT_HARD_FAIL=true
+  fi
+
+  # Desktop app presence (macOS / Windows only)
+  if [[ -n "$DESKTOP_CONFIG" ]]; then
+    local desktop_dir
+    desktop_dir="$(dirname "$DESKTOP_CONFIG")"
+    if [[ -d "$desktop_dir" ]]; then
+      printf "  ✓ %-30s (Claude desktop app detected)\n" "$desktop_dir"
+    else
+      printf "  ⚠ %-30s desktop app not detected — desktop MCP step will be skipped\n" "$desktop_dir"
+      PREFLIGHT_WARNINGS+=("Claude desktop app not found at $desktop_dir — skipping desktop MCP")
+    fi
+  fi
+
+  echo ""
+  if $PREFLIGHT_HARD_FAIL; then
+    echo "✗ One or more required tools are missing. Install them and re-run." >&2
+    exit 1
+  fi
+  if (( ${#PREFLIGHT_WARNINGS[@]} > 0 )); then
+    echo "Warnings (non-blocking):"
+    for w in "${PREFLIGHT_WARNINGS[@]}"; do
+      echo "  - $w"
+    done
+    echo ""
+  fi
 }
 
 # Detect the operating system. Sets the OS variable to one of: macos, linux, windows, unknown.
