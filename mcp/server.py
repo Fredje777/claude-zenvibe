@@ -5,7 +5,7 @@
 # ///
 """ZenVibe MCP server.
 
-Exposes three tools — `zenvibe_pause`, `zenvibe_resume`, `zenvibe_compact` —
+Exposes three tools — `zenvibe_pause`, `zenvibe_resume`, `zenvibe_checkpoint` —
 that mirror the ZenVibe slash commands for surfaces where slash commands
 are not available (Claude desktop app, claude.ai web with custom integrations).
 
@@ -343,7 +343,7 @@ def zenvibe_resume(project_path: str) -> dict[str, Any]:
 
 
 @mcp.tool()
-def zenvibe_compact(
+def zenvibe_checkpoint(
     project_path: str,
     summary: str,
     commit_message: str,
@@ -351,14 +351,16 @@ def zenvibe_compact(
     files_touched: list[str],
     next_step: str,
 ) -> dict[str, Any]:
-    """Prépare une compaction propre.
+    """Sauvegarde un checkpoint propre — sans compacter.
 
     Workflow :
     1. Commit + push de ce qui est commitable.
     2. Écrit une entrée *session-focused* en haut de docs/JOURNAL.md.
-    3. Lit .claude/zenvibe.md (instructions custom) ou utilise un template
-       générique, puis renvoie la commande `/compact <instructions>`
-       prête à coller.
+    3. Retourne un message confirmant que la compaction est sûre.
+
+    L'utilisateur reste seul à décider QUAND taper `/compact`. Claude Code
+    exclut explicitement `/compact` du tool `SlashCommand`, donc on ne
+    déclenche jamais la compaction nous-mêmes.
 
     Args:
         project_path: Chemin du projet.
@@ -369,8 +371,8 @@ def zenvibe_compact(
         next_step: Prochaine étape claire (1 ligne actionnable).
 
     Returns:
-        Un dict avec `compact_command` (à coller dans l'UI), plus le résultat
-        git et le chemin du journal.
+        Un dict avec `safe_to_compact` (bool), `next_step_message`, plus le
+        résultat git et le chemin du journal.
     """
     repo = _resolve_repo(project_path)
     git_result = _do_git_checkpoint(repo, commit_message)
@@ -379,7 +381,7 @@ def zenvibe_compact(
     now = _now()
 
     parts = [
-        f"## {now} — Compact",
+        f"## {now} — Checkpoint",
         f"\n**Résumé :** {summary}",
         "\n### Fait dans cette session\n- " + summary,
         "\n### Décisions techniques\n" + _bullets(decisions),
@@ -388,20 +390,19 @@ def zenvibe_compact(
     ]
     _prepend_to_journal(journal, "\n".join(parts))
 
-    # Custom compact instructions per project (if any)
-    custom = repo / ".claude" / "zenvibe.md"
-    if custom.exists():
-        raw = custom.read_text(encoding="utf-8")
+    # Checkpoint is "safe" only if there were no git errors
+    safe = not git_result["errors"]
+    if safe:
+        next_step_message = "🧘 It's safe to compact now. Type /compact to proceed."
     else:
-        raw = GENERIC_COMPACT_INSTRUCTIONS
-
-    # Collapse to single line (some Claude UIs reject multi-line /compact arg)
-    single_line = re.sub(r"\s+", " ", raw).strip()
-    compact_command = f"/compact {single_line}"
+        next_step_message = (
+            "⚠ Checkpoint partiel — corrige les erreurs git avant de compacter."
+        )
 
     return {
         "journal_path": str(journal.relative_to(repo)),
-        "compact_command": compact_command,
+        "safe_to_compact": safe,
+        "next_step_message": next_step_message,
         **git_result,
     }
 

@@ -31,13 +31,13 @@ Le principe est simple : **`docs/JOURNAL.md` est la source unique de vérité**.
 |---|---|---|
 | `/zenpause [note]` | Tu pars pour quelques heures | Commit + push + entrée détaillée dans `docs/JOURNAL.md` (sprint, décisions, questions, points d'attention) |
 | `/zenresume` | Tu reviens d'une pause ou d'une compaction | Lit le JOURNAL + `CLAUDE.md`, résume l'état, propose la prochaine action, attend ton feu vert |
-| `/zencompact` | Tu veux compacter consciemment | Checkpoint léger + sort la commande `/compact <instructions>` prête à coller |
+| `/zencheckpoint` | Tu veux sécuriser ton état (bookmark, ou juste avant un `/compact` manuel) | Commit + push + entrée *session-focused* dans `docs/JOURNAL.md`, puis confirme « It's safe to compact now » |
 
 ### Hooks (CC CLI + VS Code)
 
 | Événement | Action |
 |---|---|
-| `PreCompact` | Avant toute compaction (manuelle ou auto), Claude reçoit l'instruction de faire un checkpoint propre : commit, JOURNAL.md, push. Filet de sécurité si tu oublies de lancer `/zencompact`. |
+| `PreCompact` | Avant toute compaction (manuelle ou auto), Claude reçoit l'instruction de faire un checkpoint propre : commit, JOURNAL.md, push. Filet de sécurité automatique : tu peux taper `/compact` directement, le hook checkpoint avant. |
 | `SessionStart` | À l'ouverture (mode `startup` ou `compact`), si un `JOURNAL.md` récent (<14 jours) existe, Claude affiche un mini-briefing 3-lignes au premier message. Silencieux sinon. |
 
 ### MCP tools (App desktop)
@@ -46,7 +46,7 @@ Le principe est simple : **`docs/JOURNAL.md` est la source unique de vérité**.
 |---|---|---|
 | `zenvibe_pause` | `project_path, summary, commit_message, completed, current_task, remaining, decisions, open_questions, attention_points?, note?` | Exécute le commit/push + écrit l'entrée JOURNAL |
 | `zenvibe_resume` | `project_path` | Lit JOURNAL + CLAUDE.md + état git, renvoie le contexte structuré |
-| `zenvibe_compact` | `project_path, summary, commit_message, decisions, files_touched, next_step` | Checkpoint + renvoie la commande `/compact` à coller |
+| `zenvibe_checkpoint` | `project_path, summary, commit_message, decisions, files_touched, next_step` | Checkpoint propre sans compacter — renvoie `safe_to_compact` + message « It's safe to compact now » |
 
 ### Project preset (Web)
 
@@ -99,7 +99,7 @@ Ajoute dans `~/Library/Application Support/Claude/claude_desktop_config.json` :
 }
 ```
 
-Redémarre l'app. Au prochain démarrage, les 3 tools (`zenvibe_pause`, `zenvibe_resume`, `zenvibe_compact`) sont disponibles à Claude. Tu invoques en langage naturel : « Fais une pause ZenVibe sur le projet `/Users/fred/dev/kslb-bilans` ».
+Redémarre l'app. Au prochain démarrage, les 3 tools (`zenvibe_pause`, `zenvibe_resume`, `zenvibe_checkpoint`) sont disponibles à Claude. Tu invoques en langage naturel : « Fais une pause ZenVibe sur le projet `/Users/fred/dev/kslb-bilans` ».
 
 **Prérequis** : `uv` installé (`brew install uv`). `uv run --script` installe automatiquement la dépendance `mcp` à la première exécution.
 
@@ -144,7 +144,7 @@ zenvibe/  (install dir, identique au source dir)
 ├── commands/
 │   ├── zenpause.md                     /zenpause
 │   ├── zenresume.md                    /zenresume
-│   └── zencompact.md                   /zencompact
+│   └── zencheckpoint.md                /zencheckpoint
 ├── hooks/
 │   ├── hooks.json                      PreCompact + SessionStart
 │   ├── pre-compact-prompt.md
