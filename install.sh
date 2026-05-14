@@ -58,6 +58,7 @@ main() {
   copy_files
   register_plugin
   enable_plugin
+  configure_desktop_mcp
 }
 
 parse_args() {
@@ -272,6 +273,42 @@ enable_plugin() {
 data.setdefault('enabledPlugins', {})['zenvibe@local'] = True
 "
   echo "  ✓ enabled"
+}
+
+configure_desktop_mcp() {
+  if $MODE_CLI_ONLY; then
+    echo "→ Desktop MCP: skipped (--cli)"
+    return
+  fi
+  if [[ -z "$DESKTOP_CONFIG" ]]; then
+    echo "→ Desktop MCP: skipped (no desktop app on $OS)"
+    return
+  fi
+  if [[ ! -d "$(dirname "$DESKTOP_CONFIG")" ]]; then
+    echo "→ Desktop MCP: skipped (Claude desktop app not installed)"
+    return
+  fi
+  if ! command -v uv >/dev/null 2>&1; then
+    echo "→ Desktop MCP: skipped (uv not installed — install with 'brew install uv' and re-run)"
+    return
+  fi
+
+  echo "→ Configuring desktop MCP in $DESKTOP_CONFIG ..."
+  backup_json "$DESKTOP_CONFIG"
+  if [[ -n "$BACKUP_PATH" ]]; then
+    echo "  • backup: $BACKUP_PATH"
+  fi
+
+  local uv_path
+  uv_path="$(command -v uv)"
+
+  mutate_json "$DESKTOP_CONFIG" "
+data.setdefault('mcpServers', {})['zenvibe'] = {
+    'command': '$uv_path',
+    'args': ['run', '--script', '$INSTALL_DIR/mcp/server.py'],
+}
+"
+  echo "  ✓ MCP server 'zenvibe' added (command: $uv_path)"
 }
 
 # Detect the operating system. Sets the OS variable to one of: macos, linux, windows, unknown.
