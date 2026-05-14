@@ -1,7 +1,7 @@
 ---
 name: zenpause
-description: Sauvegarde l'état de la session avant une absence de plusieurs heures. Commit + push de ce qui est commitable, écrit une entrée détaillée dans docs/JOURNAL.md (tâches terminées, tâche en cours, restant à faire, décisions, questions ouvertes, état Git), signale les points d'attention pour la reprise.
-argument-hint: "[note optionnelle: ex. 'pause déjeuner, reprendre par l'auth JWT']"
+description: Save the full state of the session before stepping away for hours. Commits and pushes everything committable, writes a detailed entry in docs/JOURNAL.md (completed tasks, current task with state, remaining tasks in order, technical decisions, open questions, git state), and flags attention points for the resume.
+argument-hint: "[optional note, e.g. 'lunch break, resume with auth JWT']"
 allowed-tools:
   - Bash
   - Read
@@ -9,84 +9,85 @@ allowed-tools:
   - Edit
 ---
 
-Tu produis un handoff complet pour que l'utilisateur (ou toi-même) puisse reprendre proprement plusieurs heures plus tard.
+You produce a complete handoff so the user (or yourself) can resume cleanly hours later.
+
+**Output language:** Default to English. If `CLAUDE.md` exists at the project root and is written in French, OR if the existing journal (`docs/JOURNAL.md` or `JOURNAL.md`) contains French entries, write your output (confirmation message, new journal entry) in French. Otherwise English. Detect once and stay consistent across the whole skill execution.
 
 ## Workflow
 
-### 0. Vérifier que le répertoire est un repo git
+### 0. Verify the working directory is a git repo
 
-Lance `git rev-parse --is-inside-work-tree`. Si ça échoue, le projet n'est pas sous git : saute l'étape 1 et la section "Git" de l'étape 3, écris uniquement l'entrée du journal, et mentionne dans la confirmation qu'aucun checkpoint git n'a été fait.
+Run `git rev-parse --is-inside-work-tree`. If it fails, the project is not under git: skip step 1 and the "Git" section of step 3, write only the journal entry, and mention in the confirmation that no git checkpoint was made.
 
-### 1. Commit + push de tout ce qui est commitable
+### 1. Commit + push everything committable
 
-- Lance `git status` et `git diff --stat` pour voir ce qui a changé.
-- Lance `git log -10 --oneline` pour apprendre la convention de messages de commit du projet.
-- Pour chaque fichier modifié : s'il est dans un état stable, inclus-le dans le commit. S'il est clairement WIP / à moitié écrit (syntaxe cassée, stubs, refacto partiel), **ne le commit pas** — signale-le à l'étape 3.
-- Stage les fichiers propres et commit avec un message qui **résume ce qui a vraiment été fait dans la session**, pas "WIP".
-- Si un remote est configuré, `git push`. Si le push échoue par manque d'upstream, configure-le (`git push -u origin <branche>`) et retente. Jamais de `--force` ni `--no-verify`.
+- Run `git status` and `git diff --stat` to see what changed.
+- Run `git log -10 --oneline` to learn the project's commit message convention.
+- For each modified file: if it is in a clean, working state, include it in the commit. If it is clearly WIP or half-written (broken syntax, stub functions, partial refactor), **do not commit it** — flag it in step 3 instead.
+- Stage the clean files and commit with a message that **summarizes what was actually done this session**, not "WIP".
+- If a remote is configured, run `git push`. If push fails for a missing upstream, set it (`git push -u origin <branch>`) and retry. Never use `--force` or `--no-verify`.
 
-### 2. Localiser (ou créer) le journal
+### 2. Locate (or create) the journal
 
-Cherche dans cet ordre :
+Look for the journal in this order:
 
 1. `docs/JOURNAL.md`
-2. `JOURNAL.md` à la racine du repo
-3. Si aucun n'existe, crée `docs/JOURNAL.md` (`mkdir -p docs` d'abord).
+2. `JOURNAL.md` at the repo root
+3. If neither exists, create `docs/JOURNAL.md` (run `mkdir -p docs` first).
 
-### 3. Ajouter une nouvelle entrée en haut du journal
+### 3. Prepend a new entry to the journal
 
-La nouvelle entrée va **en haut** (newest first). Utilise cette structure — adapte les titres à la langue du journal s'il en a déjà une :
+The newest entry goes **at the top** of the file. Use this structure (translate headings to French if the project is in French):
 
 ```markdown
 ## YYYY-MM-DD HH:MM — Pause
 
-> Note de pause: <texte fourni en argument, si présent>
+> Pause note: <text passed as argument, if any>
 
-### Tâches terminées (itération en cours)
+### Completed tasks (current iteration)
 - ...
 
-### Tâche en cours
-- ... (état précis : ce qui est fait, ce qui reste à faire dessus)
+### Current task
+- ... (precise state: what is done, what remains on this task)
 
-### Tâches restantes (par ordre)
+### Remaining tasks (in order)
 1. ...
 2. ...
 
-### Décisions techniques prises cette session
+### Technical decisions made this session
 - ...
 
-### Questions ouvertes
+### Open questions
 - ...
 
 ### Git
-- Branche : <branche>
-- Dernier commit : <sha court> <message>
+- Branch: <branch>
+- Last commit: <short sha> <message>
 
-### Points d'attention pour la reprise
-- (optionnel — refactos à faire, fichiers WIP non commités, tests à écrire, code smells)
+### Attention points for the resume
+- (optional — refactors to do, uncommitted WIP files, tests to write, code smells)
 ```
 
-Sois spécifique. Chemins de fichiers, noms de fonctions, *pourquoi* derrière chaque décision. Future-toi doit pouvoir agir sans relire toute la conversation. Évite les phrases génériques type "amélioration des perfs" — dis *quoi* et *où*.
+Be specific. File paths, function names, the *why* behind each decision. Future-you must be able to act on this without re-reading the whole chat. Avoid generic phrases like "improved performance" — say *what* and *where*.
 
-### 4. Confirmer
+### 4. Confirm
 
-Sors exactement un bloc court — pas de préambule, pas de récap du contenu du journal :
+Output exactly one short block — no preamble, no recap of the journal content:
 
 ```
-État sauvegardé.
-✓ Commit : <sha court> <message>
-✓ Push : <branche> → <remote>   (ou : "rien à committer")
-✓ Journal : docs/JOURNAL.md
+State saved.
+✓ Commit: <short sha> <message>
+✓ Push: <branch> → <remote>   (or: "nothing to commit")
+✓ Journal: docs/JOURNAL.md
 
-Bonne pause. Au retour : /zenresume
+Have a good break. On return: /zenresume
 ```
 
-Si quelque chose a échoué (push refusé, journal non écrivable, fichiers WIP laissés), dis-le explicitement avec les fichiers concernés. Ne prétends jamais une réussite qui n'a pas eu lieu.
+If anything failed (push refused, journal unwritable, uncommitted WIP files), say so explicitly with the affected files. Never claim success that did not happen.
 
-## Règles
+## Rules
 
-- Ne commit jamais de fichiers qui ressemblent à des secrets : `.env*`, `*.key`, `*.pem`, `*.pfx`, `*.p12`, `id_rsa*`, `credentials*`, `secrets*`, `.npmrc` avec tokens. Fais confiance au `.gitignore` d'abord, mais si quelque chose de suspect arrive en staging, alerte et unstage.
-- Jamais de force-push ni de `--no-verify`.
-- Si `git status` est propre ET que rien de significatif ne s'est passé, tu peux écrire une entrée minimale ("session sans changements") et sortir. Ne fabrique pas du travail.
-- Adapte la langue du journal. Français par défaut si le projet est en français (regarde CLAUDE.md ou les commits récents).
-- Le journal est l'unique source de vérité. Ne crée pas de fichier d'état séparé.
+- Never commit files that look like secrets: `.env*`, `*.key`, `*.pem`, `*.pfx`, `*.p12`, `id_rsa*`, `credentials*`, `secrets*`, `.npmrc` with tokens, or anything else that looks sensitive. Trust the project's `.gitignore` first, but if something suspicious is staged, warn the user and unstage it.
+- Never force-push or skip hooks.
+- If `git status` is clean AND nothing meaningful happened this session, you may write a minimal journal entry ("session with no changes") and exit. Do not fabricate work.
+- The journal is the single source of truth. Do not create a separate state file.
