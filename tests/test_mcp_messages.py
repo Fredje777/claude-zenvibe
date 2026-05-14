@@ -40,3 +40,39 @@ def test_t_raises_on_unknown_key():
     import pytest
     with pytest.raises(KeyError):
         server._t("nonexistent_key", "en")
+
+
+def test_zenvibe_pause_writes_english_journal_by_default(tmp_repo):
+    result = server.zenvibe_pause(
+        project_path=str(tmp_repo),
+        summary="did stuff",
+        commit_message="feat: stuff",
+        completed=["a"],
+        current_task="b",
+        remaining=["c"],
+        decisions=["d"],
+        open_questions=["e"],
+    )
+    journal = (tmp_repo / "docs" / "JOURNAL.md").read_text()
+    assert "## " in journal
+    assert "— Pause" in journal
+    assert "### Completed tasks" in journal
+    assert "Branch:" in journal
+
+
+def test_zenvibe_pause_writes_french_journal_when_requested(tmp_repo):
+    server.zenvibe_pause(
+        project_path=str(tmp_repo),
+        summary="fait des trucs",
+        commit_message="feat: trucs",
+        completed=["a"],
+        current_task="b",
+        remaining=["c"],
+        decisions=["d"],
+        open_questions=["e"],
+        language="fr",
+    )
+    journal = (tmp_repo / "docs" / "JOURNAL.md").read_text()
+    assert "— Pause" in journal
+    assert "### Tâches terminées" in journal
+    assert "Branche :" in journal

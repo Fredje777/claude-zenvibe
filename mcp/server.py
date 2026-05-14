@@ -21,7 +21,7 @@ import datetime
 import re
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
 
@@ -278,28 +278,32 @@ def zenvibe_pause(
     open_questions: list[str],
     attention_points: list[str] | None = None,
     note: str | None = None,
+    language: Literal["en", "fr"] = "en",
 ) -> dict[str, Any]:
-    """Sauvegarde l'état de la session avant une absence de plusieurs heures.
+    """Save session state before stepping away for hours.
 
-    Workflow :
-    1. Commit + push de ce qui est commitable (fichiers sensibles écartés).
-    2. Écrit une entrée détaillée en haut de docs/JOURNAL.md.
-    3. Retourne un résumé des actions effectuées.
+    Workflow:
+    1. Commit + push committable files (skipping suspicious paths).
+    2. Write a detailed entry at the top of docs/JOURNAL.md.
+    3. Return a summary of actions taken.
 
     Args:
-        project_path: Chemin absolu (ou ~) du projet sur lequel agir.
-        summary: Résumé en une phrase de ce qu'on a fait cette session.
-        commit_message: Message de commit à utiliser (suit la convention du projet).
-        completed: Liste des tâches terminées dans cette itération.
-        current_task: Tâche en cours et son état précis (1 phrase).
-        remaining: Tâches restantes par ordre de priorité.
-        decisions: Décisions techniques prises cette session.
-        open_questions: Questions ouvertes à poser à l'utilisateur.
-        attention_points: Optionnel — refactos, code smells, WIP à reprendre.
-        note: Optionnel — note libre de pause fournie par l'utilisateur.
+        project_path: Absolute (or ~) path of the project to act on.
+        summary: One-sentence summary of what was done this session.
+        commit_message: Commit message to use (follow project convention).
+        completed: List of completed tasks in the current iteration.
+        current_task: Current task and its precise state (one sentence).
+        remaining: Remaining tasks in priority order.
+        decisions: Technical decisions made this session.
+        open_questions: Open questions for the user.
+        attention_points: Optional — refactors, code smells, WIP to resume.
+        note: Optional — free-form pause note provided by the user.
+        language: Output language for the journal entry ("en" or "fr").
+            The caller (Claude) decides based on project signals (CLAUDE.md
+            language, existing journal language). Defaults to "en".
 
     Returns:
-        Un dict avec `commit_sha`, `pushed`, `journal_path`, `branch`,
+        A dict with `commit_sha`, `pushed`, `journal_path`, `branch`,
         `errors`, `warnings`, `skipped_suspicious`.
     """
     repo = _resolve_repo(project_path)
@@ -308,27 +312,34 @@ def zenvibe_pause(
     journal = _find_or_create_journal(repo)
     now = _now()
 
-    parts = [f"## {now} — Pause"]
+    parts = [f"## {now} — {_t('pause_heading', language)}"]
     if note:
-        parts.append(f"\n> Note de pause : {note}")
-    parts.append(f"\n**Résumé :** {summary}")
-    parts.append("\n### Tâches terminées (itération en cours)\n" + _bullets(completed))
-    parts.append("\n### Tâche en cours\n- " + current_task)
-    parts.append("\n### Tâches restantes (par ordre)\n" + _numbered(remaining))
-    parts.append("\n### Décisions techniques prises cette session\n" + _bullets(decisions))
-    parts.append("\n### Questions ouvertes\n" + _bullets(open_questions))
+        parts.append(f"\n{_t('pause_note_prefix', language)}{note}")
+    parts.append(f"\n{_t('summary_prefix', language)}{summary}")
+    parts.append(f"\n{_t('completed_section', language)}\n" + _bullets(completed))
+    parts.append(f"\n{_t('current_task_section', language)}\n- " + current_task)
+    parts.append(f"\n{_t('remaining_section', language)}\n" + _numbered(remaining))
+    parts.append(f"\n{_t('decisions_section', language)}\n" + _bullets(decisions))
+    parts.append(f"\n{_t('open_questions_section', language)}\n" + _bullets(open_questions))
 
     git_lines = []
     if git_result["branch"]:
-        git_lines.append(f"- Branche : {git_result['branch']}")
+        git_lines.append(
+            f"{_t('git_branch_prefix', language)}{git_result['branch']}"
+        )
     if git_result["commit_sha"]:
-        git_lines.append(f"- Dernier commit : {git_result['commit_sha']} {commit_message}")
+        git_lines.append(
+            f"{_t('git_last_commit_prefix', language)}"
+            f"{git_result['commit_sha']} {commit_message}"
+        )
     if not git_lines:
-        git_lines.append("- _(pas de repo git ou rien à committer)_")
-    parts.append("\n### Git\n" + "\n".join(git_lines))
+        git_lines.append(_t("git_none", language))
+    parts.append(f"\n{_t('git_section', language)}\n" + "\n".join(git_lines))
 
     if attention_points:
-        parts.append("\n### Points d'attention pour la reprise\n" + _bullets(attention_points))
+        parts.append(
+            f"\n{_t('attention_section', language)}\n" + _bullets(attention_points)
+        )
 
     entry = "\n".join(parts)
     _prepend_to_journal(journal, entry)
