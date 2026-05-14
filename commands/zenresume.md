@@ -1,67 +1,69 @@
 ---
 name: zenresume
-description: Réétablit le contexte après une pause ou une compaction. Lit docs/JOURNAL.md en entier, lit CLAUDE.md pour les conventions du projet, vérifie l'état Git, résume où en sont les choses, propose une prochaine action concrète et attend le feu vert explicite avant de toucher au code.
+description: Re-establish context after a pause or compaction. Reads docs/JOURNAL.md in full, reads CLAUDE.md for project conventions, checks git state, summarizes where things stand, proposes a concrete next action, and waits for explicit confirmation before touching code.
 argument-hint: ""
 allowed-tools:
   - Bash
   - Read
 ---
 
-L'utilisateur reprend après une pause ou après une compaction de la conversation. Réétablis le contexte **avant de faire quoi que ce soit d'autre**.
+The user is resuming after a pause or a conversation compaction. Re-establish context properly **before doing anything else**.
+
+**Output language:** Default to English. If `CLAUDE.md` is in French OR the journal contains French entries, write your briefing in French. Otherwise English.
 
 ## Workflow
 
-### 1. Lire le journal en entier
+### 1. Read the journal in full
 
-- Essaie `docs/JOURNAL.md`. Si absent, essaie `JOURNAL.md` à la racine.
-- Si aucun n'existe, dis : « Pas de JOURNAL trouvé. Tu veux qu'on en démarre un, ou tu préfères me briefer à l'oral ? » — puis stoppe et attends.
-- Lis le journal **entièrement**. La dernière entrée prime, mais les précédentes portent des décisions différées, des refactos, du contexte encore actif.
+- Try `docs/JOURNAL.md`. If absent, try `JOURNAL.md` at the repo root.
+- If neither exists, say: "No JOURNAL found. Want to start one, or would you rather brief me verbally?" — then stop and wait.
+- Read the journal **entirely**. The latest entry matters most, but earlier ones carry deferred decisions, refactors, and context still in play.
 
-### 2. Lire les conventions du projet
+### 2. Read project conventions
 
-Lis `CLAUDE.md` à la racine s'il existe. Note les conventions sur les commits, le nommage, la sécurité, les validations, les tests — elles guident tout ce que tu fais cette session. Si plusieurs `CLAUDE.md` existent en sous-dossiers, lis celui le plus proche de la zone de travail mentionnée dans le journal.
+Read `CLAUDE.md` at the project root if present. Note the conventions on commits, naming, security, validations, testing — they guide everything you do this session. If multiple `CLAUDE.md` exist in subdirectories, read the one closest to the work area mentioned in the journal.
 
-### 3. Vérifier l'état Git réel
+### 3. Check the actual git state
 
-Lance, en parallèle :
+Run, in parallel:
 - `git status`
 - `git log -5 --oneline`
 - `git branch --show-current`
 
-Compare avec la section "Git" de la dernière entrée du journal. Si ça diverge (nouveaux commits, modifs non commitées non prévues, branche différente), signale-le dans ton résumé.
+Compare with the "Git" section of the latest journal entry. If they diverge (new commits, unexpected uncommitted changes, different branch), flag it in your summary.
 
-### 4. Produire un briefing compact
+### 4. Produce a compact briefing
 
-Sors exactement cette structure, remplie depuis ce que tu as lu :
+Output exactly this structure, filled from what you read:
 
 ```
-Repris depuis docs/JOURNAL.md (entrée du <date heure>)
+Resumed from docs/JOURNAL.md (entry of <date time>)
 
-Tu étais sur : <tâche en cours>
-Fait depuis la pause : <commits visibles depuis la pause, ou "rien">
-Reste sur cette tâche : <points non terminés>
-Prochaine action proposée : <1 phrase concrète, actionnable>
+You were on: <current task>
+Since the pause: <commits visible since pause, or "nothing">
+Remaining on this task: <unfinished points>
+Proposed next action: <one concrete, actionable sentence>
 
-Points d'attention notés à la pause :
+Attention points noted at pause:
 - ...
 
-Conventions actives (CLAUDE.md) : <2-3 puces si pertinent pour la prochaine action>
+Active conventions (CLAUDE.md): <2–3 bullets if relevant to the next action>
 
-Je reprends ? (oui / non / autre direction)
+Shall I resume? (yes / no / different direction)
 ```
 
-Reste sous 25 lignes. L'utilisateur veut du contexte, pas une re-narration du journal.
+Keep it under 25 lines. The user wants context, not a re-narration of the journal.
 
-### 5. Attendre un go explicite
+### 5. Wait for an explicit go-ahead
 
-**Ne pas** éditer de fichiers, lancer de commandes mutantes, ni démarrer l'action proposée tant que l'utilisateur n'a pas explicitement confirmé ("oui", "go", "vas-y", "ok", "yes" — n'importe quel assentiment clair).
+**Do not** edit files, run mutating commands, or start the proposed action until the user explicitly confirms ("yes", "go", "ok", "oui", "vas-y" — any clear assent).
 
-- Si l'utilisateur redirige ("non, fais plutôt X"), pivote immédiatement — le contexte du journal est dans ta tête, tu peux agir sur la nouvelle direction sans relire.
-- Si l'utilisateur pose une question d'éclaircissement d'abord, réponds depuis le journal, puis redemande le go.
+- If the user redirects ("no, do X instead"), pivot immediately — the journal context is now in your head, you can act on the new direction without re-reading.
+- If the user asks a clarifying question first, answer it from the journal, then ask for the go again.
 
-## Règles
+## Rules
 
-- Read-only pendant la reprise. Pas d'édits, pas de commits, pas de migrations, rien de mutant tant que l'utilisateur n'a pas dit go.
-- Si le journal est long, lis-le quand même en entier. Le contexte prime sur l'économie de tokens ici.
-- Adapte la langue du briefing à celle du journal (français si le journal est en français).
-- Sois honnête si le journal est lacunaire, contradictoire, ou ne couvre pas ce que l'utilisateur demande — dis-le et pose la question.
+- Read-only during resume. No edits, no commits, no migrations, nothing mutating until the user says go.
+- If the journal is long, read it all anyway. Context wins over token economy here.
+- Match the language of the journal in your briefing.
+- Be honest if the journal is sparse, contradictory, or doesn't cover what the user is asking about — say so and ask.
