@@ -55,6 +55,7 @@ main() {
     exit 0
   fi
   confirm_install
+  copy_files
 }
 
 parse_args() {
@@ -161,6 +162,71 @@ confirm_install() {
     y|Y|yes|YES) return 0 ;;
     *) echo "Aborted."; exit 0 ;;
   esac
+}
+
+# Create a timestamped backup of a JSON file if it exists.
+# Sets BACKUP_PATH global for the caller.
+backup_json() {
+  local path="$1"
+  BACKUP_PATH=""
+  if [[ -f "$path" ]]; then
+    local ts
+    ts="$(date +%Y%m%d-%H%M%S)"
+    BACKUP_PATH="${path}.backup-${ts}"
+    cp "$path" "$BACKUP_PATH"
+  fi
+}
+
+# Run an inline Python snippet that mutates a JSON file safely (read → modify → atomic rewrite).
+# Args: JSON path, python expression that takes a dict named `data` and modifies in place.
+mutate_json() {
+  local path="$1"
+  local py_mutation="$2"
+  python3 - "$path" <<PY
+import json
+import os
+import sys
+import tempfile
+
+path = sys.argv[1]
+if os.path.exists(path):
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+else:
+    data = {}
+
+${py_mutation}
+
+# Atomic write
+fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".tmp-install-", suffix=".json")
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+    # Validate it parses
+    with open(tmp) as f:
+        json.load(f)
+    os.replace(tmp, path)
+except Exception:
+    if os.path.exists(tmp):
+        os.unlink(tmp)
+    raise
+PY
+}
+
+# Copy plugin files using rsync.
+copy_files() {
+  echo "→ Copying plugin files to $INSTALL_DIR ..."
+  mkdir -p "$INSTALL_DIR"
+  rsync -a --delete \
+    --exclude '.git/' \
+    --exclude '*.backup-*' \
+    --exclude '__pycache__/' \
+    --exclude '.pytest_cache/' \
+    --exclude '.idea/' \
+    --exclude 'tests/' \
+    "$SOURCE_DIR/" "$INSTALL_DIR/"
+  echo "  ✓ files copied"
 }
 
 # Detect the operating system. Sets the OS variable to one of: macos, linux, windows, unknown.
