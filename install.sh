@@ -59,6 +59,7 @@ main() {
   register_plugin
   enable_plugin
   configure_desktop_mcp
+  print_summary
 }
 
 parse_args() {
@@ -309,6 +310,33 @@ data.setdefault('mcpServers', {})['zenvibe'] = {
 }
 "
   echo "  ✓ MCP server 'zenvibe' added (command: $uv_path)"
+}
+
+print_summary() {
+  echo ""
+  echo "=== Install complete ==="
+  echo ""
+  echo "✓ CC CLI / VS Code: /zenpause, /zenresume, /zencheckpoint available"
+  echo "  → Start a new \`claude\` session (or restart VS Code Claude Code panel)"
+  echo ""
+  if $MODE_CLI_ONLY; then
+    echo "→ Desktop app: skipped (--cli)"
+  elif [[ -z "$DESKTOP_CONFIG" ]]; then
+    echo "→ Desktop app: not applicable on $OS"
+  elif [[ ! -d "$(dirname "$DESKTOP_CONFIG")" ]]; then
+    echo "→ Desktop app: not detected — skipped"
+  elif ! command -v uv >/dev/null 2>&1; then
+    echo "→ Desktop app: skipped (uv missing). Install uv and re-run to enable."
+  else
+    echo "✓ Desktop app: MCP server 'zenvibe' configured"
+    echo "  → Quit Claude.app entirely (Cmd+Q) and reopen for it to pick up the new MCP"
+  fi
+  echo ""
+  echo "→ Web (claude.ai): manual step — see docs/web-project.md to create a ZenVibe Project"
+  echo ""
+  echo "Backups of any JSON config that was modified are stored alongside with a"
+  echo "  '.backup-YYYYMMDD-HHMMSS' suffix. Restore with 'cp' if anything went wrong."
+  echo ""
 }
 
 # Detect the operating system. Sets the OS variable to one of: macos, linux, windows, unknown.
