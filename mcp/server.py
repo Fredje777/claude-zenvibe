@@ -51,6 +51,68 @@ GENERIC_COMPACT_INSTRUCTIONS = (
     "tâtonnements."
 )
 
+# ---------------------------------------------------------------------------
+# Smart-bilingual messages
+# ---------------------------------------------------------------------------
+#
+# All user-visible strings written by the MCP tools route through `_t(key, lang)`.
+# Add a new pair (en + fr) here, then reference it by key in the tools.
+#
+# Claude (the caller) is responsible for deciding the language from project
+# signals (CLAUDE.md content, existing journal language) and passing it via
+# the `language` argument of each tool. Default is English.
+
+MESSAGES: dict[str, dict[str, str]] = {
+    "en": {
+        "safe_to_compact": "🧘 It's safe to compact now. Type /compact to proceed.",
+        "checkpoint_partial": "⚠ Partial checkpoint — fix the git errors before compacting.",
+        "pause_heading": "Pause",
+        "checkpoint_heading": "Checkpoint",
+        "pause_note_prefix": "> Pause note: ",
+        "summary_prefix": "**Summary:** ",
+        "completed_section": "### Completed tasks (current iteration)",
+        "current_task_section": "### Current task",
+        "remaining_section": "### Remaining tasks (in order)",
+        "decisions_section": "### Technical decisions made this session",
+        "open_questions_section": "### Open questions",
+        "files_touched_section": "### Files touched",
+        "next_step_section": "### Clear next step",
+        "git_section": "### Git",
+        "git_branch_prefix": "- Branch: ",
+        "git_last_commit_prefix": "- Last commit: ",
+        "git_none": "- _(not a git repo or nothing to commit)_",
+        "attention_section": "### Attention points for the resume",
+        "session_done_section": "### Done this session",
+    },
+    "fr": {
+        "safe_to_compact": "🧘 Tu peux compacter sans risque. Tape /compact pour lancer.",
+        "checkpoint_partial": "⚠ Checkpoint partiel — corrige les erreurs git avant de compacter.",
+        "pause_heading": "Pause",
+        "checkpoint_heading": "Checkpoint",
+        "pause_note_prefix": "> Note de pause : ",
+        "summary_prefix": "**Résumé :** ",
+        "completed_section": "### Tâches terminées (itération en cours)",
+        "current_task_section": "### Tâche en cours",
+        "remaining_section": "### Tâches restantes (par ordre)",
+        "decisions_section": "### Décisions techniques prises cette session",
+        "open_questions_section": "### Questions ouvertes",
+        "files_touched_section": "### Fichiers touchés",
+        "next_step_section": "### Prochaine étape claire",
+        "git_section": "### Git",
+        "git_branch_prefix": "- Branche : ",
+        "git_last_commit_prefix": "- Dernier commit : ",
+        "git_none": "- _(pas de repo git ou rien à committer)_",
+        "attention_section": "### Points d'attention pour la reprise",
+        "session_done_section": "### Fait dans cette session",
+    },
+}
+
+
+def _t(key: str, language: str) -> str:
+    """Resolve a localized message. Falls back to English on unknown language."""
+    lang_dict = MESSAGES.get(language) or MESSAGES["en"]
+    return lang_dict[key]  # KeyError on unknown key — caller bug
+
 
 def _resolve_repo(project_path: str) -> Path:
     """Expand ~ and resolve the project path, raising if it doesn't exist."""
