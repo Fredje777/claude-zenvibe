@@ -56,6 +56,8 @@ main() {
   fi
   confirm_install
   copy_files
+  register_plugin
+  enable_plugin
 }
 
 parse_args() {
@@ -227,6 +229,49 @@ copy_files() {
     --exclude 'tests/' \
     "$SOURCE_DIR/" "$INSTALL_DIR/"
   echo "  ✓ files copied"
+}
+
+register_plugin() {
+  echo "→ Registering plugin in $CC_INSTALLED_PLUGINS ..."
+  mkdir -p "$(dirname "$CC_INSTALLED_PLUGINS")"
+  backup_json "$CC_INSTALLED_PLUGINS"
+  if [[ -n "$BACKUP_PATH" ]]; then
+    echo "  • backup: $BACKUP_PATH"
+  fi
+
+  local version
+  version="$(python3 -c "import json; print(json.load(open('$INSTALL_DIR/.claude-plugin/plugin.json'))['version'])")"
+
+  mutate_json "$CC_INSTALLED_PLUGINS" "
+from datetime import datetime, timezone
+data.setdefault('version', 2)
+data.setdefault('plugins', {})
+now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+existing = data['plugins'].get('zenvibe@local', [{}])
+existing[0] = {
+    'scope': 'user',
+    'installPath': '$INSTALL_DIR',
+    'version': '$version',
+    'installedAt': existing[0].get('installedAt', now),
+    'lastUpdated': now,
+}
+data['plugins']['zenvibe@local'] = existing
+"
+  echo "  ✓ registered as zenvibe@local v$version"
+}
+
+enable_plugin() {
+  echo "→ Enabling plugin in $CC_SETTINGS ..."
+  mkdir -p "$(dirname "$CC_SETTINGS")"
+  backup_json "$CC_SETTINGS"
+  if [[ -n "$BACKUP_PATH" ]]; then
+    echo "  • backup: $BACKUP_PATH"
+  fi
+
+  mutate_json "$CC_SETTINGS" "
+data.setdefault('enabledPlugins', {})['zenvibe@local'] = True
+"
+  echo "  ✓ enabled"
 }
 
 # Detect the operating system. Sets the OS variable to one of: macos, linux, windows, unknown.
