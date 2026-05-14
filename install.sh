@@ -39,7 +39,16 @@ main() {
   fi
   echo "Source: $SOURCE_DIR"
   echo ""
-  # Sub-steps will be added in subsequent tasks.
+  detect_os
+  resolve_paths
+  echo "Detected OS: $OS"
+  echo "Plugin install dir: $INSTALL_DIR"
+  if [[ -n "$DESKTOP_CONFIG" ]]; then
+    echo "Desktop config: $DESKTOP_CONFIG"
+  else
+    echo "Desktop config: (not applicable on $OS)"
+  fi
+  echo ""
 }
 
 parse_args() {
@@ -53,6 +62,54 @@ parse_args() {
     esac
     shift
   done
+}
+
+# Detect the operating system. Sets the OS variable to one of: macos, linux, windows, unknown.
+detect_os() {
+  local u="$(uname -s)"
+  case "$u" in
+    Darwin*)            OS="macos" ;;
+    Linux*)             OS="linux" ;;
+    MINGW*|MSYS*|CYGWIN*) OS="windows" ;;
+    *)                  OS="unknown" ;;
+  esac
+}
+
+# Resolve install paths based on OS.
+resolve_paths() {
+  case "$OS" in
+    macos|linux)
+      INSTALL_DIR="$HOME/.claude/plugins/zenvibe"
+      CC_SETTINGS="$HOME/.claude/settings.json"
+      CC_INSTALLED_PLUGINS="$HOME/.claude/plugins/installed_plugins.json"
+      ;;
+    windows)
+      INSTALL_DIR="$HOME/.claude/plugins/zenvibe"
+      CC_SETTINGS="$HOME/.claude/settings.json"
+      CC_INSTALLED_PLUGINS="$HOME/.claude/plugins/installed_plugins.json"
+      ;;
+    *)
+      echo "✗ Unsupported OS: $(uname -s)" >&2
+      exit 1
+      ;;
+  esac
+
+  case "$OS" in
+    macos)
+      DESKTOP_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
+      ;;
+    windows)
+      # In Git Bash, $APPDATA is set
+      if [[ -n "${APPDATA:-}" ]]; then
+        DESKTOP_CONFIG="$APPDATA/Claude/claude_desktop_config.json"
+      else
+        DESKTOP_CONFIG=""  # Skipped: cannot resolve
+      fi
+      ;;
+    linux)
+      DESKTOP_CONFIG=""  # No Claude desktop app on Linux
+      ;;
+  esac
 }
 
 main "$@"
