@@ -2,11 +2,13 @@
   "name": "zenvibe",
   "displayName": "ZenVibe",
   "version": "0.1.0",
-  "description": "Pauses, reprises et compactages propres pour les sessions Claude Code. Sauvegarde l'état dans JOURNAL.md, automatise les checkpoints avant compaction, et réoriente Claude après.",
+  "description": "Vibe-code with a safety net. Pause, resume, and checkpoint Claude Code sessions; auto-protect context before compaction.",
   "author": {
     "name": "Fred Fonteyne",
     "email": "frederic.fonteyne@gmail.com"
   },
+  "homepage": "https://github.com/Fredje777/claude-zenvibe",
+  "repository": "https://github.com/Fredje777/claude-zenvibe",
   "keywords": [
     "workflow",
     "context-management",
