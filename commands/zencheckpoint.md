@@ -1,6 +1,6 @@
 ---
 name: zencheckpoint
-description: Sauvegarde l'état courant de la session SANS compacter — commit + push de ce qui est commitable, écrit une entrée session-focused dans docs/JOURNAL.md (ce qui a été fait, décisions, fichiers touchés, prochaine étape), puis confirme que la compaction est sûre. À utiliser comme bookmark mi-tâche, ou juste avant de taper /compact manuellement.
+description: Save the current session state WITHOUT compacting — commit + push committable files, write a session-focused entry in docs/JOURNAL.md (what was done, decisions, files touched, next step), then confirm it is safe to compact. Use as a mid-task bookmark, or right before typing /compact manually.
 argument-hint: ""
 allowed-tools:
   - Bash
@@ -9,73 +9,75 @@ allowed-tools:
   - Edit
 ---
 
-L'utilisateur veut sauvegarder l'état actuel de la session sans détruire le contexte. Tu fais un checkpoint propre, puis tu lui confirmes qu'il peut compacter en sécurité s'il le souhaite.
+The user wants to save the current state without destroying context. You make a clean checkpoint, then confirm they can compact safely if they wish.
 
-**Important** : tu ne lances **jamais** `/compact` toi-même. Claude Code exclut explicitement `/compact` du tool `SlashCommand`. La compaction reste une action que l'utilisateur déclenche manuellement. Ton rôle ici est uniquement de sécuriser le contexte avant.
+**Output language:** Default to English. If `CLAUDE.md` is in French OR the journal contains French entries, write your output in French. Otherwise English.
 
-Le hook `PreCompact` fera de toute façon le même travail si l'utilisateur tape `/compact` sans avoir lancé ce skill — donc ce skill est essentiellement un *checkpoint à la demande*, utile aussi en milieu de tâche pour bookmarker sans compacter.
+**Important:** you never run `/compact` yourself. Claude Code explicitly excludes `/compact` from the `SlashCommand` tool. Compaction stays an action the user triggers manually. Your role here is solely to secure context beforehand.
+
+The `PreCompact` hook does the same work automatically if the user types `/compact` without running this skill first — so this skill is essentially an *on-demand checkpoint*, also useful mid-task to bookmark without compacting.
 
 ## Workflow
 
-### 0. Vérifier que le répertoire est un repo git
+### 0. Verify the working directory is a git repo
 
-Lance `git rev-parse --is-inside-work-tree`. Si ça échoue, saute l'étape 1 entièrement, écris uniquement l'entrée du journal, et mentionne "pas de repo git" dans la confirmation.
+Run `git rev-parse --is-inside-work-tree`. If it fails, skip step 1 entirely, write only the journal entry, and mention "not a git repo" in the confirmation.
 
-### 1. Commit + push des changements commitables
+### 1. Commit + push committable changes
 
-- `git status` et `git log -5 --oneline` d'abord.
-- Stage les fichiers propres. Saute les WIP à moitié écrits (et préviens l'utilisateur — ne commit pas de code cassé).
-- Commit avec un message significatif qui résume la session, en suivant la convention existante du projet.
-- Push si un remote est configuré.
+- Run `git status` and `git log -5 --oneline` first.
+- Stage clean files. Skip half-written WIP (and warn the user — never commit broken code).
+- Commit with a meaningful message that summarizes the session, following the project's existing convention.
+- Push if a remote is configured.
 
-### 2. Mettre à jour le journal
+### 2. Update the journal
 
-Ajoute une nouvelle entrée en haut de `docs/JOURNAL.md` (ou `JOURNAL.md` à la racine). Crée `docs/JOURNAL.md` si aucun n'existe.
+Prepend a new entry at the top of `docs/JOURNAL.md` (or `JOURNAL.md` at root). Create `docs/JOURNAL.md` if neither exists.
 
-Cette entrée est **focalisée session**, plus courte qu'un handoff complet :
+This entry is **session-focused**, shorter than a full handoff:
 
 ```markdown
 ## YYYY-MM-DD HH:MM — Checkpoint
 
-### Fait dans cette session
+### Done this session
 - ...
 
-### Décisions techniques
+### Technical decisions
 - ...
 
-### Fichiers touchés
+### Files touched
 - path/to/file
 - ...
 
-### Prochaine étape claire
-- ... (1 ligne actionnable)
+### Clear next step
+- ... (one actionable line)
 ```
 
-Garde ça serré. Le but est de bookmarker l'état, pas d'écrire une revue de sprint.
+Keep it tight. The point is to bookmark the state, not write a sprint review.
 
-### 3. Confirmer
+### 3. Confirm
 
-Sors exactement ce bloc, ni plus, ni moins :
+Output exactly this block, no more, no less:
 
 ```
 ✓ Checkpoint
-✓ Commit : <sha> <message>   (ou : "rien à committer")
-✓ Push : <branche> → <remote>   (ou : "pas de remote")
-✓ Journal : docs/JOURNAL.md
+✓ Commit: <sha> <message>   (or: "nothing to commit")
+✓ Push: <branch> → <remote>   (or: "no remote")
+✓ Journal: docs/JOURNAL.md
 
 🧘 It's safe to compact now. Type /compact to proceed.
 ```
 
-Si quelque chose a échoué (push refusé, journal non écrivable, WIP non commitable), liste-le explicitement à la place de la ligne `✓` correspondante, et **omets** la ligne finale `🧘 It's safe to compact` — le but étant justement de ne pas inviter à compacter quand le checkpoint n'est pas propre.
+If something failed (push refused, journal unwritable, uncommittable WIP), list it explicitly in place of the relevant `✓` line, and **omit** the final `🧘 It's safe to compact` line — precisely because we do not want to invite a compaction when the checkpoint is not clean.
 
-### 4. Custom instructions pour `/compact` (optionnel)
+### 4. Custom `/compact` instructions (optional)
 
-Si l'utilisateur veut des instructions custom au moment où il tapera `/compact`, il peut consulter `.claude/zenvibe.md` du projet (si présent) qui contient le texte recommandé. Tu **ne le lis pas** ici et tu ne l'affiches pas — ce fichier est juste là pour qu'il puisse copier-coller dans `/compact <texte>` quand il le décide.
+If the user wants custom instructions when they later type `/compact`, they can keep them in `.claude/zenvibe.md` in their project. You do **not** read it here and you do not display it — that file is just available for them to copy-paste into `/compact <text>` when they decide.
 
-## Règles
+## Rules
 
-- **Ne lance jamais `/compact` toi-même.** C'est explicitement exclu du tool `SlashCommand` de Claude Code. L'utilisateur seul déclenche la compaction.
-- Ne commit jamais de WIP cassé — alerte et laisse les fichiers en place.
-- Ne commit jamais ce qui ressemble à un secret (`.env*`, `*.key`, `*.pem`, `credentials*`, etc.).
-- Si `git status` est propre et que le journal couvre déjà l'état courant, dis-le franchement et émets quand même le message `🧘 It's safe to compact now`.
-- Le hook `PreCompact` refera le même travail si l'utilisateur tape `/compact` ensuite — c'est idempotent et sans danger.
+- **Never run `/compact` yourself.** It is explicitly excluded from the `SlashCommand` tool. The user alone triggers compaction.
+- Never commit broken WIP — warn instead and leave the files in place.
+- Never commit anything that looks like a secret (`.env*`, `*.key`, `*.pem`, `credentials*`, etc.).
+- If `git status` is clean and the journal already covers the current state, say so plainly and still emit the `🧘 It's safe to compact now` message.
+- The `PreCompact` hook will redo the same work if the user types `/compact` afterwards — it is idempotent and safe.
