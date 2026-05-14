@@ -1,31 +1,33 @@
-Une compaction de la conversation est sur le point d'avoir lieu (manuelle via `/compact`, ou automatique parce que le contexte est plein).
+A compaction of the conversation is about to happen (either user-triggered via `/compact`, or automatic because the context is full).
 
-Avant qu'elle ne se produise, fais un checkpoint propre :
+Before it proceeds, make a clean checkpoint:
 
-1. Lance `git status`. Si des fichiers sont en état commitable, commit avec un message qui résume ce qu'on vient de faire dans la session. Suis la convention de commits du projet (regarde `git log -5 --oneline`). Ne commite jamais de WIP cassé ni de fichier qui ressemble à un secret (`.env`, `*.key`, `credentials*`).
+1. Run `git status`. If files are in a committable state, commit them with a message summarizing what was done in this session. Follow the project's commit convention (check `git log -5 --oneline`). Never commit broken WIP, and never commit anything that looks like a secret (`.env*`, `*.key`, `credentials*`, etc.).
 
-2. Ouvre ou crée `docs/JOURNAL.md` (fallback : `JOURNAL.md` à la racine) et ajoute une entrée datée **en haut** du fichier :
+2. Open or create `docs/JOURNAL.md` (fallback: `JOURNAL.md` at root) and prepend a dated entry **at the top** of the file:
 
    ```markdown
-   ## YYYY-MM-DD HH:MM — Compact (auto)
+   ## YYYY-MM-DD HH:MM — Checkpoint (auto)
 
-   ### Fait dans cette session
+   ### Done this session
    - ...
 
-   ### Décisions techniques
+   ### Technical decisions
    - ...
 
-   ### Fichiers touchés
+   ### Files touched
    - ...
 
-   ### Prochaine étape claire
-   - ... (1 ligne actionnable)
+   ### Clear next step
+   - ... (one actionable line)
    ```
 
-3. Push si un remote est configuré (`git push`). Ne force jamais, ne saute jamais les hooks.
+   **Output language:** Match the project. If `CLAUDE.md` is in French OR the existing journal contains French entries, write the new entry in French. Otherwise English.
 
-4. Confirme à l'utilisateur en une ligne : `Checkpoint OK avant compact.`
+3. Push if a remote is configured (`git push`). Never force, never skip hooks.
 
-Si rien n'est à committer ou journaliser (conversation très courte, ou checkpoint déjà fait juste avant), dis-le simplement (`Rien à checkpointer.`) et laisse la compaction se faire.
+4. Confirm to the user in one line: `Checkpoint OK before compact.`
 
-Une fois ce checkpoint terminé, la compaction technique va suivre. Au prochain message utilisateur après compaction, si tu as perdu le contexte, lis `docs/JOURNAL.md` et `CLAUDE.md` pour te réorienter — ou suggère à l'utilisateur de lancer `/zenresume`.
+If nothing is committable or worth journaling (very short conversation, or checkpoint already done just before), say so plainly (`Nothing to checkpoint.`) and let the compaction proceed.
+
+Once this checkpoint is done, the technical compaction will follow. On the next user message after compaction, if you have lost context, read `docs/JOURNAL.md` and `CLAUDE.md` to reorient — or suggest the user run `/zenresume`.
