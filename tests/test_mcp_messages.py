@@ -76,3 +76,33 @@ def test_zenvibe_pause_writes_french_journal_when_requested(tmp_repo):
     assert "— Pause" in journal
     assert "### Tâches terminées" in journal
     assert "Branche :" in journal
+
+
+def test_zenvibe_checkpoint_default_en_message(tmp_repo):
+    result = server.zenvibe_checkpoint(
+        project_path=str(tmp_repo),
+        summary="did x",
+        commit_message="feat: x",
+        decisions=["d"],
+        files_touched=["a.py"],
+        next_step="do y",
+    )
+    assert result["safe_to_compact"] is True
+    assert "safe to compact" in result["next_step_message"].lower()
+
+
+def test_zenvibe_checkpoint_french_message(tmp_repo):
+    result = server.zenvibe_checkpoint(
+        project_path=str(tmp_repo),
+        summary="fait x",
+        commit_message="feat: x",
+        decisions=["d"],
+        files_touched=["a.py"],
+        next_step="faire y",
+        language="fr",
+    )
+    assert result["safe_to_compact"] is True
+    assert "compacter sans risque" in result["next_step_message"].lower()
+    journal = (tmp_repo / "docs" / "JOURNAL.md").read_text()
+    assert "— Checkpoint" in journal
+    assert "### Fait dans cette session" in journal

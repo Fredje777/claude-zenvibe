@@ -423,29 +423,32 @@ def zenvibe_checkpoint(
     decisions: list[str],
     files_touched: list[str],
     next_step: str,
+    language: Literal["en", "fr"] = "en",
 ) -> dict[str, Any]:
-    """Sauvegarde un checkpoint propre — sans compacter.
+    """Save a clean checkpoint — without compacting.
 
-    Workflow :
-    1. Commit + push de ce qui est commitable.
-    2. Écrit une entrée *session-focused* en haut de docs/JOURNAL.md.
-    3. Retourne un message confirmant que la compaction est sûre.
+    Workflow:
+    1. Commit + push committable changes.
+    2. Write a session-focused entry at the top of docs/JOURNAL.md.
+    3. Return a message confirming it is safe to compact.
 
-    L'utilisateur reste seul à décider QUAND taper `/compact`. Claude Code
-    exclut explicitement `/compact` du tool `SlashCommand`, donc on ne
-    déclenche jamais la compaction nous-mêmes.
+    The user remains the sole decider of WHEN to type `/compact`. Claude Code
+    explicitly excludes `/compact` from its `SlashCommand` tool, so we never
+    trigger compaction ourselves.
 
     Args:
-        project_path: Chemin du projet.
-        summary: Résumé en une phrase de ce qu'on a fait cette session.
-        commit_message: Message de commit.
-        decisions: Décisions techniques de la session.
-        files_touched: Fichiers principaux touchés.
-        next_step: Prochaine étape claire (1 ligne actionnable).
+        project_path: Project path.
+        summary: One-sentence summary of what was done this session.
+        commit_message: Commit message.
+        decisions: Technical decisions made this session.
+        files_touched: Main files touched.
+        next_step: Clear next step (one actionable line).
+        language: Output language for the journal entry ("en" or "fr").
+            Defaults to "en".
 
     Returns:
-        Un dict avec `safe_to_compact` (bool), `next_step_message`, plus le
-        résultat git et le chemin du journal.
+        A dict with `safe_to_compact` (bool), `next_step_message`, plus the
+        git result and the journal path.
     """
     repo = _resolve_repo(project_path)
     git_result = _do_git_checkpoint(repo, commit_message)
@@ -454,23 +457,20 @@ def zenvibe_checkpoint(
     now = _now()
 
     parts = [
-        f"## {now} — Checkpoint",
-        f"\n**Résumé :** {summary}",
-        "\n### Fait dans cette session\n- " + summary,
-        "\n### Décisions techniques\n" + _bullets(decisions),
-        "\n### Fichiers touchés\n" + _bullets(files_touched),
-        "\n### Prochaine étape claire\n- " + next_step,
+        f"## {now} — {_t('checkpoint_heading', language)}",
+        f"\n{_t('summary_prefix', language)}{summary}",
+        f"\n{_t('session_done_section', language)}\n- " + summary,
+        f"\n{_t('decisions_section', language)}\n" + _bullets(decisions),
+        f"\n{_t('files_touched_section', language)}\n" + _bullets(files_touched),
+        f"\n{_t('next_step_section', language)}\n- " + next_step,
     ]
     _prepend_to_journal(journal, "\n".join(parts))
 
-    # Checkpoint is "safe" only if there were no git errors
     safe = not git_result["errors"]
     if safe:
-        next_step_message = "🧘 It's safe to compact now. Type /compact to proceed."
+        next_step_message = _t("safe_to_compact", language)
     else:
-        next_step_message = (
-            "⚠ Checkpoint partiel — corrige les erreurs git avant de compacter."
-        )
+        next_step_message = _t("checkpoint_partial", language)
 
     return {
         "journal_path": str(journal.relative_to(repo)),
