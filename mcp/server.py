@@ -164,15 +164,22 @@ def _now() -> str:
 
 
 def _do_git_checkpoint(
-    repo: Path, commit_message: str
+    repo: Path, commit_message: str, files_to_commit: list[str]
 ) -> dict[str, Any]:
-    """Stage safe modified files, commit, push. Returns a result dict."""
+    """Stage caller-listed files (skipping secrets), commit, push.
+
+    Only paths in `files_to_commit` are staged — the caller (the LLM) decides
+    per-file what is clean, exactly as the slash commands do. Changed files not
+    listed are reported in `skipped_not_listed` so the caller can flag them
+    (e.g. WIP) in the journal. Returns a result dict.
+    """
     result: dict[str, Any] = {
         "is_git_repo": False,
         "branch": None,
         "commit_sha": None,
         "pushed": False,
         "skipped_suspicious": [],
+        "skipped_not_listed": [],
         "errors": [],
         "warnings": [],
     }
@@ -204,11 +211,19 @@ def _do_git_checkpoint(
     if suspicious:
         result["skipped_suspicious"] = suspicious
 
-    if not safe:
-        result["warnings"].append("All modified files look like secrets — nothing committed.")
+    # Explicit allowlist: commit ONLY files the caller judged clean.
+    # WIP judgment lives with the LLM, mirroring the /zenpause slash command.
+    allow = set(files_to_commit)
+    to_commit = [f for f in safe if f in allow]
+    not_listed = [f for f in safe if f not in allow]
+    if not_listed:
+        result["skipped_not_listed"] = not_listed
+
+    if not to_commit:
+        result["warnings"].append("No listed files to commit.")
         return result
 
-    add = _git(["add", "--", *safe], repo)
+    add = _git(["add", "--", *to_commit], repo)
     if add.returncode != 0:
         result["errors"].append(f"git add failed: {add.stderr.strip()}")
         return result
