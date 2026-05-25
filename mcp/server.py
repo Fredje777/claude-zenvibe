@@ -280,6 +280,7 @@ def zenvibe_pause(
     project_path: str,
     summary: str,
     commit_message: str,
+    files_to_commit: list[str],
     completed: list[str],
     current_task: str,
     remaining: list[str],
@@ -300,6 +301,10 @@ def zenvibe_pause(
         project_path: Absolute (or ~) path of the project to act on.
         summary: One-sentence summary of what was done this session.
         commit_message: Commit message to use (follow project convention).
+        files_to_commit: Repo-relative paths (as in `git status`) of files in a
+            clean, finished state to commit. OMIT any WIP/half-written file
+            (broken syntax, stubs, partial refactor) — list those in
+            `attention_points` instead. Pass [] to commit nothing.
         completed: List of completed tasks in the current iteration.
         current_task: Current task and its precise state (one sentence).
         remaining: Remaining tasks in priority order.
@@ -316,7 +321,7 @@ def zenvibe_pause(
         `errors`, `warnings`, `skipped_suspicious`.
     """
     repo = _resolve_repo(project_path)
-    git_result = _do_git_checkpoint(repo, commit_message)
+    git_result = _do_git_checkpoint(repo, commit_message, files_to_commit)
 
     journal = _find_or_create_journal(repo)
     now = _now()
@@ -429,6 +434,7 @@ def zenvibe_checkpoint(
     project_path: str,
     summary: str,
     commit_message: str,
+    files_to_commit: list[str],
     decisions: list[str],
     files_touched: list[str],
     next_step: str,
@@ -449,6 +455,9 @@ def zenvibe_checkpoint(
         project_path: Project path.
         summary: One-sentence summary of what was done this session.
         commit_message: Commit message.
+        files_to_commit: Repo-relative paths (as in `git status`) of files in a
+            clean, finished state to commit. Omit WIP files. Pass [] to commit
+            nothing.
         decisions: Technical decisions made this session.
         files_touched: Main files touched.
         next_step: Clear next step (one actionable line).
@@ -460,7 +469,7 @@ def zenvibe_checkpoint(
         git result and the journal path.
     """
     repo = _resolve_repo(project_path)
-    git_result = _do_git_checkpoint(repo, commit_message)
+    git_result = _do_git_checkpoint(repo, commit_message, files_to_commit)
 
     journal = _find_or_create_journal(repo)
     now = _now()
