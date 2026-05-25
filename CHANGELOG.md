@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- MCP server no longer blind-commits every changed file. `zenvibe_pause` and `zenvibe_checkpoint` now require `files_to_commit`; only listed, secret-filtered files are committed, and unlisted changes are returned in `skipped_not_listed` — closing the WIP asymmetry with the slash commands.
+
 ## [0.1.0] — 2026-05-13
 
 ### Added
