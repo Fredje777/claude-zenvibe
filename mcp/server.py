@@ -164,15 +164,22 @@ def _now() -> str:
 
 
 def _do_git_checkpoint(
-    repo: Path, commit_message: str
+    repo: Path, commit_message: str, files_to_commit: list[str]
 ) -> dict[str, Any]:
-    """Stage safe modified files, commit, push. Returns a result dict."""
+    """Stage caller-listed files (skipping secrets), commit, push.
+
+    Only paths in `files_to_commit` are staged — the caller (the LLM) decides
+    per-file what is clean, exactly as the slash commands do. Changed files not
+    listed are reported in `skipped_not_listed` so the caller can flag them
+    (e.g. WIP) in the journal. Returns a result dict.
+    """
     result: dict[str, Any] = {
         "is_git_repo": False,
         "branch": None,
         "commit_sha": None,
         "pushed": False,
         "skipped_suspicious": [],
+        "skipped_not_listed": [],
         "errors": [],
         "warnings": [],
     }
@@ -204,11 +211,19 @@ def _do_git_checkpoint(
     if suspicious:
         result["skipped_suspicious"] = suspicious
 
-    if not safe:
-        result["warnings"].append("All modified files look like secrets — nothing committed.")
+    # Explicit allowlist: commit ONLY files the caller judged clean.
+    # WIP judgment lives with the LLM, mirroring the /zenpause slash command.
+    allow = set(files_to_commit)
+    to_commit = [f for f in safe if f in allow]
+    not_listed = [f for f in safe if f not in allow]
+    if not_listed:
+        result["skipped_not_listed"] = not_listed
+
+    if not to_commit:
+        result["warnings"].append("No listed files to commit.")
         return result
 
-    add = _git(["add", "--", *safe], repo)
+    add = _git(["add", "--", *to_commit], repo)
     if add.returncode != 0:
         result["errors"].append(f"git add failed: {add.stderr.strip()}")
         return result
@@ -265,6 +280,7 @@ def zenvibe_pause(
     project_path: str,
     summary: str,
     commit_message: str,
+    files_to_commit: list[str],
     completed: list[str],
     current_task: str,
     remaining: list[str],
@@ -285,6 +301,10 @@ def zenvibe_pause(
         project_path: Absolute (or ~) path of the project to act on.
         summary: One-sentence summary of what was done this session.
         commit_message: Commit message to use (follow project convention).
+        files_to_commit: Repo-relative paths (as in `git status`) of files in a
+            clean, finished state to commit. OMIT any WIP/half-written file
+            (broken syntax, stubs, partial refactor) — list those in
+            `attention_points` instead. Pass [] to commit nothing.
         completed: List of completed tasks in the current iteration.
         current_task: Current task and its precise state (one sentence).
         remaining: Remaining tasks in priority order.
@@ -298,10 +318,12 @@ def zenvibe_pause(
 
     Returns:
         A dict with `commit_sha`, `pushed`, `journal_path`, `branch`,
-        `errors`, `warnings`, `skipped_suspicious`.
+        `errors`, `warnings`, `skipped_suspicious`, and `skipped_not_listed`
+        (paths that changed but were not in `files_to_commit` — surface them
+        in `attention_points`).
     """
     repo = _resolve_repo(project_path)
-    git_result = _do_git_checkpoint(repo, commit_message)
+    git_result = _do_git_checkpoint(repo, commit_message, files_to_commit)
 
     journal = _find_or_create_journal(repo)
     now = _now()
@@ -414,6 +436,7 @@ def zenvibe_checkpoint(
     project_path: str,
     summary: str,
     commit_message: str,
+    files_to_commit: list[str],
     decisions: list[str],
     files_touched: list[str],
     next_step: str,
@@ -434,6 +457,9 @@ def zenvibe_checkpoint(
         project_path: Project path.
         summary: One-sentence summary of what was done this session.
         commit_message: Commit message.
+        files_to_commit: Repo-relative paths (as in `git status`) of files in a
+            clean, finished state to commit. Omit WIP files. Pass [] to commit
+            nothing.
         decisions: Technical decisions made this session.
         files_touched: Main files touched.
         next_step: Clear next step (one actionable line).
@@ -442,10 +468,12 @@ def zenvibe_checkpoint(
 
     Returns:
         A dict with `safe_to_compact` (bool), `next_step_message`, plus the
-        git result and the journal path.
+        git result (including `skipped_not_listed` — paths that changed but
+        were not in `files_to_commit`, to surface in the next decision/note)
+        and the journal path.
     """
     repo = _resolve_repo(project_path)
-    git_result = _do_git_checkpoint(repo, commit_message)
+    git_result = _do_git_checkpoint(repo, commit_message, files_to_commit)
 
     journal = _find_or_create_journal(repo)
     now = _now()
