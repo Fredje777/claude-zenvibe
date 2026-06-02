@@ -1,3 +1,43 @@
+## 2026-06-02 (4) — Pause
+
+> Note de pause: soumission au community marketplace en cours de remplissage dans le formulaire claude.ai.
+
+### Tâches terminées (itération en cours)
+- v0.2.1 publiée et validée (`claude plugin validate` ✓), marketplace auto-hébergée pinnée sur v0.2.1
+- Formulaire de soumission ouvert via `open https://claude.ai/settings/plugins/submit` (l'extension Chrome n'était PAS connectée → pas de pré-remplissage auto, remplissage manuel)
+- Champs déjà saisis dans le formulaire : **Link to plugin** (`https://github.com/Fredje777/claude-zenvibe`), **Plugin name** (`ZenVibe`), **Plugin description** (la tagline), **Plugin homepage** = laissé vide (optionnel, le repo fait déjà office de homepage)
+
+### Tâche en cours
+- Remplissage du formulaire de soumission community. Dernier champ traité : "Plugin homepage" (laissé vide). Prochain champ requis : **Example use cases** (texte fourni à l'utilisateur, format "Example 1: … / Example 2: …", 4 exemples couvrant zenpause / zenresume / zencheckpoint / hook PreCompact). Pas encore soumis.
+
+### Tâches restantes (par ordre)
+1. Coller les **Example use cases** (4 exemples déjà rédigés dans le chat de cette session)
+2. Remplir les champs restants au scroll : probablement **Category** = Productivity, **License** = MIT, éventuellement **version/commit** (tag v0.2.1 / sha `6534bcc2c08eb59dec6700ca243a39e830d9fb97`), peut-être une attestation sécurité
+3. **Soumettre** le formulaire
+4. Surveiller l'apparition dans le catalogue community (sync nocturne) : https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json
+5. (optionnel) re-tester en vrai que PreCompact + SessionStart se déclenchent maintenant qu'ils sont correctement wirés (v0.2.1)
+
+### Décisions techniques prises cette session
+- **Plugin homepage laissé vide** : champ optionnel destiné à un site de doc dédié ; ZenVibe n'en a pas de distinct du repo (déjà dans "Link to plugin"). Inutile de dupliquer.
+- Soumission cible bien **claude-community** (pas official) via le formulaire in-app authentifié claude.ai/settings/plugins/submit.
+
+### Questions ouvertes
+- Le formulaire demande-t-il un champ commit/version explicite, ou pinne-t-il automatiquement au dernier commit du repo ? (à voir au scroll)
+- Y a-t-il une case d'attestation sécurité à cocher ? (le dossier `docs/marketplace-submission.md` §sécurité couvre les réponses si besoin)
+
+### Git
+- Branche : main
+- Dernier commit : 2c29dac docs(journal): v0.2.1 — hooks fix + community-marketplace submission path
+- Working tree propre (le travail de session = remplissage formulaire web, hors repo)
+
+### Points d'attention pour la reprise
+- **Rien à committer** : l'action en cours est dans le navigateur, pas dans le code. Ne pas chercher de diff.
+- Si l'utilisateur relance l'extension Chrome + la signe in, je peux **pré-remplir** le formulaire automatiquement (au lieu du copier-coller manuel) — proposer au retour.
+- Le formulaire claude.ai/settings/plugins/submit était ouvert dans le navigateur par défaut ; s'il a été fermé, le rouvrir avec `open`.
+- Tous les champs prêts-à-coller sont dans `docs/marketplace-submission.md` (committé) ET dans l'historique de chat de cette session.
+
+---
+
 ## 2026-06-02 (3) — Checkpoint
 
 ### Fait dans cette session
