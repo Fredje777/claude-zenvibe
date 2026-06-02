@@ -1,43 +1,62 @@
-# ZenVibe — Plugin Directory Submission Packet
+# ZenVibe — Community Marketplace Submission Packet
 
-Reference packet for submitting ZenVibe to the official Claude Code plugin
-directory. Form: <https://clau.de/plugin-directory-submission>
+Reference packet for submitting ZenVibe to Anthropic's **community** marketplace
+(`claude-community`). Kept in-repo so it can be reused when resubmitting or updating.
 
-> The official marketplace (`anthropics/claude-plugins-official`) does **not**
-> accept PRs for third-party plugins — submission is via the form above, with
-> an Anthropic quality + security review. This file is the copy-paste source
-> for that form, kept in-repo so it can be reused when resubmitting or updating.
+## The two Anthropic marketplaces (important)
+
+- **`claude-plugins-official`** — curated by Anthropic at its sole discretion.
+  **No application process; the submission form does NOT add plugins here.**
+- **`claude-community`** — the public community marketplace where third-party
+  submissions land **after review**. Users add it with
+  `/plugin marketplace add anthropics/claude-plugins-community` and install as
+  `@claude-community`. **This is what we submit to.**
+
+## How to submit
+
+1. **Validate locally first** (the review pipeline runs the same check + automated
+   safety screening):
+
+   ```bash
+   claude plugin validate /path/to/claude-zenvibe
+   ```
+
+   Must print `✔ Validation passed` for the plugin manifest. (Status: passing as of v0.2.1.)
+
+2. **Submit via an in-app form** (authenticated, tied to your account):
+   - Claude.ai: <https://claude.ai/settings/plugins/submit>
+   - Console: <https://platform.claude.com/plugins/submit>
+
+3. After approval, the plugin is **pinned to a commit SHA** in the
+   [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community)
+   catalog. CI bumps the pin as you push new commits. The public catalog syncs
+   **nightly**, so expect a delay between approval and the listing appearing.
+   Check status by searching the name in the
+   [community catalog `marketplace.json`](https://github.com/anthropics/claude-plugins-community/blob/main/.claude-plugin/marketplace.json).
 
 ---
 
 ## Core fields (copy-paste)
 
-**Plugin name:** ZenVibe
+**Plugin name:** zenvibe (display: ZenVibe)
 
-**Short description (one line):**
+**Short description:**
 Vibe-code with a safety net. Pause, resume, and checkpoint Claude Code sessions; auto-protect context before compaction.
 
 **Category:** Productivity
 
-**Author / maintainer:** Fred Fonteyne
-
-**Contact email:** frederic.fonteyne@gmail.com
+**Author / maintainer:** Fred Fonteyne — frederic.fonteyne@gmail.com
 
 **Repository (public, MIT):** https://github.com/Fredje777/claude-zenvibe
 
-**Latest release:** v0.2.0 — https://github.com/Fredje777/claude-zenvibe/releases/tag/v0.2.0
+**Latest release:** v0.2.1 — https://github.com/Fredje777/claude-zenvibe/releases/tag/v0.2.1
 
-**Marketplace source (for the directory entry):**
-- type: `github`
-- repo: `Fredje777/claude-zenvibe`
-- ref: `v0.2.0`
-- sha: `8b5c999dbd2f145d0f775983424fd8f72d109f7c`
+**Commit pin:** `6534bcc2c08eb59dec6700ca243a39e830d9fb97` (tag `v0.2.1`)
 
 **License:** MIT
 
-> When releasing a new version, update `ref` + `sha` here and in
-> `.claude-plugin/marketplace.json`, then resubmit if the directory entry
-> needs to track the new release.
+> On a new release, update `ref` + `sha` in `.claude-plugin/marketplace.json`
+> (self-hosted marketplace). The community catalog re-pins automatically via CI.
 
 ---
 
@@ -45,29 +64,24 @@ Vibe-code with a safety net. Pause, resume, and checkpoint Claude Code sessions;
 
 ZenVibe helps developers — especially newcomers "vibe coding" with Claude — keep their work safe across the three moments where a session normally loses context:
 
-- **Pause** (`/zenpause`): full handoff before stepping away — commits + pushes committable files, writes a detailed entry to `docs/JOURNAL.md` (completed tasks, current task, remaining work, technical decisions, open questions, git state, attention points).
-- **Resume** (`/zenresume`): re-establishes context after a pause or compaction by reading the journal + CLAUDE.md + git state, then proposes a next action and waits for explicit confirmation. Read-only until the user says go.
-- **Checkpoint** (`/zencheckpoint`): saves state cleanly without compacting; outputs an "It's safe to compact now" confirmation.
+- **Pause** (`/zenpause`): full handoff before stepping away — commits + pushes committable files, writes a detailed entry to `docs/JOURNAL.md`.
+- **Resume** (`/zenresume`): re-establishes context after a pause or compaction; read-only until the user confirms.
+- **Checkpoint** (`/zencheckpoint`): saves state cleanly without compacting.
 
-Two automatic hooks:
-- **PreCompact**: checkpoints (commit + journal + push) before any compaction, manual or automatic.
-- **SessionStart**: a 3-line briefing when reopening a project with a recent journal.
+Two automatic hooks: **PreCompact** (checkpoint before any compaction) and **SessionStart** (3-line briefing when reopening a recent project). Plus an MCP server (3 tools) for the Claude desktop app and a claude.ai web Project preset. Smart-bilingual output (English default, French when the project signals French).
 
-Also ships an MCP server (3 tools: `zenvibe_pause`, `zenvibe_resume`, `zenvibe_checkpoint`) for the Claude desktop app, and a claude.ai web Project preset. Output is smart-bilingual (English by default, French when the project signals French).
-
-The single source of truth is `docs/JOURNAL.md` in the user's own repo. Git is the safety net beneath it.
+The single source of truth is `docs/JOURNAL.md` in the user's own repo.
 
 ---
 
-## Security & quality posture (for the review)
+## Security & quality posture
 
-- **Local-only.** No outbound network calls anywhere in the code. The only network operation is an explicit, user-initiated `git push` to the user's own remote.
-- **No telemetry, no phone-home, no cloud.** Nothing leaves the machine.
-- **No hardcoded secrets.** A denylist (`.env*`, `*.key`, `*.pem`, `*.pfx`, `*.p12`, `id_rsa*`, `credentials*`, `secrets*`, `.npmrc`) prevents committing sensitive files; suspicious staged files are unstaged with a warning.
-- **Least-privilege tools.** `/zenresume` is read-only (Bash, Read). `/zenpause` and `/zencheckpoint` add Write/Edit only to manage the journal.
-- **Git safety rails.** Never `--force`, never `--no-verify`. WIP / half-written files are never committed (the LLM lists them as attention points instead).
-- **MCP safety.** JSON config edits (installer) use read → modify → atomic rewrite + parse validation, with timestamped backups before any change.
-- **Tested.** 20 local pytest cases cover the MCP smart-bilingual dispatch, the file-allowlist commit logic, and the SessionStart hook gating.
+- **Local-only.** No outbound network calls in the code; the only network op is an explicit, user-initiated `git push` to the user's own remote. No telemetry, no cloud.
+- **No hardcoded secrets**, with a denylist preventing commit of `.env*`, `*.key`, `*.pem`, `*.pfx`, `*.p12`, `id_rsa*`, `credentials*`, `secrets*`, `.npmrc`.
+- **Least-privilege tools.** `/zenresume` is read-only; `/zenpause` / `/zencheckpoint` add Write/Edit only for the journal.
+- **Git safety rails.** Never `--force`, never `--no-verify`. WIP files are never committed.
+- **Passes `claude plugin validate`** (plugin manifest + hooks) as of v0.2.1.
+- **Tested.** 20 local pytest cases (MCP bilingual dispatch, file-allowlist commit logic, SessionStart gating).
 
 ---
 
@@ -84,6 +98,6 @@ Then `/zen` to see the three commands. Or clone + `./install.sh` to also wire th
 
 ## Notes
 
-- Supported surfaces: Claude Code CLI, VS Code (Claude Code extension), Claude desktop app (via MCP), claude.ai web (via Project preset).
+- Surfaces: Claude Code CLI, VS Code, Claude desktop app (MCP), claude.ai web (Project preset).
 - Platforms: macOS (full), Linux (CC CLI), Windows (WSL / Git Bash).
-- Already has one external contributor (PR #2, merged) and an open roadmap (#3 ZENVIBE_LANG, #4 configurable journal, #5 PowerShell installer).
+- One external contributor already (PR #2, merged); open roadmap (#3 ZENVIBE_LANG, #4 configurable journal, #5 PowerShell installer).

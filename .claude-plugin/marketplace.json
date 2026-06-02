@@ -20,8 +20,8 @@
       "source": {
         "source": "github",
         "repo": "Fredje777/claude-zenvibe",
-        "ref": "v0.2.0",
-        "sha": "8b5c999dbd2f145d0f775983424fd8f72d109f7c"
+        "ref": "v0.2.1",
+        "sha": "6534bcc2c08eb59dec6700ca243a39e830d9fb97"
       },
       "homepage": "https://github.com/Fredje777/claude-zenvibe",
       "keywords": [
