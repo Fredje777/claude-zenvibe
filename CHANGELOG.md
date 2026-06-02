@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] — 2026-06-02
+
+### Fixed
+
+- **Hooks now actually fire.** `hooks/hooks.json` wrapped its events (`PreCompact`, `SessionStart`) at the top level instead of under the required `hooks` key. They are now correctly nested, so the auto-checkpoint and session-start briefing run as intended. Caught by `claude plugin validate`.
+- **Removed the non-schema `displayName` field** from `plugin.json` — it was rejected by the official manifest validator. The display name now derives from `name`.
+
 ## [0.2.0] — 2026-06-02
 
 ### Fixed

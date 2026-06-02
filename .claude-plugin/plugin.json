@@ -1,7 +1,6 @@
 {
   "name": "zenvibe",
-  "displayName": "ZenVibe",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Vibe-code with a safety net. Pause, resume, and checkpoint Claude Code sessions; auto-protect context before compaction.",
   "author": {
     "name": "Fred Fonteyne",
