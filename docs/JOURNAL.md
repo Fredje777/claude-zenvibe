@@ -1,3 +1,32 @@
+## 2026-06-02 — Checkpoint
+
+### Fait dans cette session
+- Issue #1 (WIP asymmetry MCP) traitée : commentaire posté validant l'approche allowlist, bump v0.2.0 annoncé
+- PR #2 de @smartitemgalaxy mergée (4 commits, +120/-9) : `files_to_commit` requis sur `_do_git_checkpoint`/`zenvibe_pause`/`zenvibe_checkpoint`, champ `skipped_not_listed`, parité `zencheckpoint`, test `test_git_checkpoint.py`
+- Release **v0.2.0** : bump `plugin.json` 0.1.0→0.2.0, CHANGELOG `[Unreleased]`→`[0.2.0]`, commit `2ff8688`, tag `v0.2.0` poussé, GitHub Release publiée (crédit contributeur)
+- Issue #1 auto-fermée par le merge ; 20/20 tests passent
+- Réinstall locale en v0.2.0 (`./install.sh --yes`) — version vérifiée dans `installed_plugins.json` + copie installée
+- 3 issues roadmap ouvertes : #3 `ZENVIBE_LANG` env var (good first issue), #4 journal configurable, #5 PowerShell installer (help wanted)
+
+### Questions ouvertes — RÉSOLUES
+- ✅ **L'app desktop affiche bien "ZenVibe" (V majuscule)** — le champ `displayName` EST honoré sur la version desktop affichée (capture du panneau Customize, v0.2.0)
+- ✅ **Les 3 commandes chargent en anglais sur desktop** — `/zencheckpoint`, `/zenpause`, `/zenresume` listées avec descriptions EN, version 0.2.0, auteur Fred Fonteyne
+
+### Questions encore ouvertes
+- Le hook `SessionStart` se déclenche-t-il avec `source=compact` en pratique ? (demande de provoquer une compaction pour tester)
+- La règle smart bilingual est-elle trop conservative ? (cf. issue #3 qui ajoute un override explicite via env var)
+
+### Vérifications restantes (manuel)
+- Test live d'**invocation** d'une slash command dans un vrai chat (l'enregistrement est confirmé, l'exécution bout-en-bout reste à éprouver formellement — mais déjà utilisée en pratique cette session)
+
+### État
+- v0.2.0 public, taggée, release publiée. Issue #1 fermée, PR #2 mergée. 3 issues roadmap ouvertes. Plugin local à jour.
+
+### Prochaine étape claire
+- Attendre l'engagement sur les issues #3/#4/#5, ou attaquer #3 (`ZENVIBE_LANG`) soi-même comme prochaine petite itération si envie.
+
+---
+
 ## 2026-05-14 11:32 — Pause
 
 > Note de pause: pause après publication v0.1.0 sur GitHub.
