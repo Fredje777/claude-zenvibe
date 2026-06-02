@@ -1,0 +1,37 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "fredje777",
+  "owner": {
+    "name": "Fred Fonteyne",
+    "email": "frederic.fonteyne@gmail.com"
+  },
+  "metadata": {
+    "description": "Plugins by Fred Fonteyne",
+    "homepage": "https://github.com/Fredje777/claude-zenvibe"
+  },
+  "plugins": [
+    {
+      "name": "zenvibe",
+      "description": "Vibe-code with a safety net. Pause, resume, and checkpoint Claude Code sessions; auto-protect context before compaction.",
+      "author": {
+        "name": "Fred Fonteyne"
+      },
+      "category": "productivity",
+      "source": {
+        "source": "github",
+        "repo": "Fredje777/claude-zenvibe",
+        "ref": "v0.2.0",
+        "sha": "8b5c999dbd2f145d0f775983424fd8f72d109f7c"
+      },
+      "homepage": "https://github.com/Fredje777/claude-zenvibe",
+      "keywords": [
+        "workflow",
+        "context-management",
+        "compaction",
+        "journal",
+        "checkpoint",
+        "productivity"
+      ]
+    }
+  ]
+}

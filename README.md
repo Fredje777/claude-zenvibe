@@ -33,13 +33,26 @@ ZenVibe runs on **macOS** (fully supported), **Linux** (CC CLI only — no Claud
 
 ## Quick start
 
+### Option A — Plugin marketplace (fastest, CC CLI + VS Code)
+
+From inside Claude Code:
+
+```
+/plugin marketplace add Fredje777/claude-zenvibe
+/plugin install zenvibe@fredje777
+```
+
+This installs the slash commands and hooks, and registers the MCP server for Claude Code. Type `/zen` to autocomplete on the three commands.
+
+### Option B — Installer script (adds the desktop app too)
+
+The marketplace flow covers Claude Code (terminal + VS Code). If you also want ZenVibe in the **Claude desktop app**, run the installer — it configures the desktop MCP server in addition to the CC plugin:
+
 ```bash
 git clone https://github.com/Fredje777/claude-zenvibe.git
 cd claude-zenvibe
 ./install.sh
 ```
-
-Then start a new `claude` session (or restart VS Code's Claude Code panel) and type `/zen` to autocomplete on the three commands.
 
 For platform-specific procedures and troubleshooting, see [`docs/INSTALL.md`](docs/INSTALL.md).
 
