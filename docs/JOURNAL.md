@@ -1,3 +1,37 @@
+## 2026-06-02 (3) — Checkpoint
+
+### Fait dans cette session
+- **Lancé `claude plugin validate` avant soumission → a débusqué 2 vrais bugs :**
+  1. `hooks/hooks.json` mettait les events au top-level au lieu de les nicher sous une clé `hooks` → **les hooks ne se déclenchaient jamais** (résout enfin la question ouverte "le SessionStart fire-t-il ?"). Corrigé.
+  2. `displayName` n'est pas dans le schéma du plugin manifest → rejeté par le validateur. Retiré (l'app desktop l'affichait quand même, mais schéma > cosmétique).
+- **v0.2.1 publiée** : commit `6534bcc`, tag `v0.2.1` poussé, GitHub Release créée. Plugin passe `claude plugin validate` proprement (plugin manifest + hooks).
+- marketplace.json re-pin sur v0.2.1 (sha `6534bcc`)
+- `docs/marketplace-submission.md` corrigé avec le VRAI process de soumission
+- Réinstall locale v0.2.1, 20/20 tests verts
+
+### Décisions / découvertes techniques
+- **Le "vrai" chemin de soumission n'est PAS celui qu'on croyait.** Il existe DEUX marketplaces Anthropic :
+  - `claude-plugins-official` : curée à la discrétion d'Anthropic, **aucun process de candidature**, le formulaire n'y ajoute rien.
+  - `claude-community` : marketplace **communautaire publique**, soumissions tierces **après revue**. C'est LÀ qu'on soumet. Les users l'ajoutent via `/plugin marketplace add anthropics/claude-plugins-community`.
+- **Soumission via formulaire in-app authentifié** (pas une PR, pas le vieux lien clau.de qui redirige maintenant vers la doc) :
+  - claude.ai/settings/plugins/submit
+  - platform.claude.com/plugins/submit
+- Après approbation : plugin **pinné à un SHA** dans le catalogue community, CI bump le pin automatiquement aux nouveaux commits, **sync nocturne** (délai entre approbation et apparition).
+- `claude plugin validate` = exactement le check du pipeline de revue → toujours le lancer avant de soumettre.
+- **Leçon** : la validation avant soumission a évité de soumettre un plugin aux hooks cassés. Le subagent-driven testait les tests pytest mais PAS le schéma hooks.json (les tests testaient le script Python, pas le wiring du hook).
+
+### Vérifications restantes (manuel — toi)
+- Remplir le formulaire de soumission community (claude.ai/settings/plugins/submit OU platform.claude.com/plugins/submit) avec `docs/marketplace-submission.md`
+- (optionnel mais recommandé) re-tester en vrai que `PreCompact` et `SessionStart` se déclenchent maintenant qu'ils sont bien wirés — provoquer un `/compact` et rouvrir le projet
+
+### État
+- v0.2.1 public, marketplace auto-hébergée live (pin v0.2.1), validation Anthropic-grade passée, dossier de soumission community prêt et corrigé.
+
+### Prochaine étape claire
+- Soumettre via le formulaire in-app, puis surveiller l'apparition dans le catalogue community (sync nocturne).
+
+---
+
 ## 2026-06-02 (2) — Checkpoint
 
 ### Fait dans cette session
