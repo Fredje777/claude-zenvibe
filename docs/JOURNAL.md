@@ -1,3 +1,28 @@
+## 2026-06-02 (2) — Checkpoint
+
+### Fait dans cette session
+- **Marketplace auto-hébergée livrée** : `.claude-plugin/marketplace.json` (name `fredje777`), plugin `zenvibe` épinglé au tag v0.2.0 + sha `8b5c999`, catégorie `productivity`. Commit `4b0e8ed` poussé. Install native désormais : `/plugin marketplace add Fredje777/claude-zenvibe` puis `/plugin install zenvibe@fredje777`
+- README mis à jour : Option A (marketplace, le plus rapide, CC CLI + VS Code) + Option B (`install.sh`, ajoute l'app desktop)
+- **Audit sécurité/qualité** passé : local-only (zéro appel réseau), pas de secrets hardcodés, least-privilege (zenresume lecture seule), garde-fous git (jamais force/no-verify), 20 tests. Posture clean pour la revue Anthropic.
+- **Dossier de soumission officielle** rédigé : `docs/marketplace-submission.md` (champs prêts-à-coller + section sécurité) pour le formulaire https://clau.de/plugin-directory-submission
+
+### Décisions techniques
+- **Deux voies marketplace, pas une** : la marketplace officielle (`anthropics/claude-plugins-official`) n'accepte PAS de PR tierce — soumission via formulaire + revue qualité/sécurité Anthropic. Donc : auto-hébergée d'abord (contrôle total, ship immédiat), soumission officielle en parallèle (visibilité, délai incertain).
+- **Source `github` épinglée par ref+sha** plutôt que chemin relatif `./` : le repo EST le plugin (manifest à la racine), pas un sous-dossier ; la source github pinnée évite l'ambiguïté de résolution ET fige la version livrée. Modèle calqué sur les entrées tierces de la marketplace officielle.
+- **marketplace.json vit sur `main`, source pointe sur v0.2.0** : séparation propre — `/plugin marketplace add` lit le json sur main, `/plugin install` récupère le plugin au tag v0.2.0.
+
+### Vérifications restantes (manuel)
+- Tester `/plugin marketplace add Fredje777/claude-zenvibe` + `/plugin install zenvibe@fredje777` en conditions réelles
+- Remplir le formulaire de soumission officielle avec `docs/marketplace-submission.md`
+
+### État
+- v0.2.0 public + marketplace auto-hébergée live + dossier de soumission officielle prêt. Issue #1 fermée, PR #2 mergée, 3 issues roadmap ouvertes.
+
+### Prochaine étape claire
+- Soumettre via le formulaire, OU attaquer l'issue #3 (`ZENVIBE_LANG`) comme prochaine petite itération.
+
+---
+
 ## 2026-06-02 — Checkpoint
 
 ### Fait dans cette session
