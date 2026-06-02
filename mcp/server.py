@@ -318,7 +318,9 @@ def zenvibe_pause(
 
     Returns:
         A dict with `commit_sha`, `pushed`, `journal_path`, `branch`,
-        `errors`, `warnings`, `skipped_suspicious`.
+        `errors`, `warnings`, `skipped_suspicious`, and `skipped_not_listed`
+        (paths that changed but were not in `files_to_commit` — surface them
+        in `attention_points`).
     """
     repo = _resolve_repo(project_path)
     git_result = _do_git_checkpoint(repo, commit_message, files_to_commit)
@@ -466,7 +468,9 @@ def zenvibe_checkpoint(
 
     Returns:
         A dict with `safe_to_compact` (bool), `next_step_message`, plus the
-        git result and the journal path.
+        git result (including `skipped_not_listed` — paths that changed but
+        were not in `files_to_commit`, to surface in the next decision/note)
+        and the journal path.
     """
     repo = _resolve_repo(project_path)
     git_result = _do_git_checkpoint(repo, commit_message, files_to_commit)
