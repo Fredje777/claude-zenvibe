@@ -11,7 +11,7 @@ allowed-tools:
 
 The user wants to save the current state without destroying context. You make a clean checkpoint, then confirm they can compact safely if they wish.
 
-**Output language:** Default to English. If `CLAUDE.md` is in French OR the journal contains French entries, write your output in French. Otherwise English.
+**Output language:** Default to English. If `ZENVIBE_LANG` is set to `en` or `fr`, that wins. Otherwise, if `CLAUDE.md` is in French OR the journal contains French entries, write your output in French. Otherwise English.
 
 **Important:** you never run `/compact` yourself. Claude Code explicitly excludes `/compact` from the `SlashCommand` tool. Compaction stays an action the user triggers manually. Your role here is solely to secure context beforehand.
 

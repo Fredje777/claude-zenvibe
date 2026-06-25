@@ -11,7 +11,7 @@ allowed-tools:
 
 You produce a complete handoff so the user (or yourself) can resume cleanly hours later.
 
-**Output language:** Default to English. If `CLAUDE.md` exists at the project root and is written in French, OR if the existing journal (`docs/JOURNAL.md` or `JOURNAL.md`) contains French entries, write your output (confirmation message, new journal entry) in French. Otherwise English. Detect once and stay consistent across the whole skill execution.
+**Output language:** Default to English. If `ZENVIBE_LANG` is set to `en` or `fr`, that wins. Otherwise, if `CLAUDE.md` exists at the project root and is written in French, OR if the existing journal (`docs/JOURNAL.md` or `JOURNAL.md`) contains French entries, write your output (confirmation message, new journal entry) in French. Otherwise English. Detect once and stay consistent across the whole skill execution.
 
 ## Workflow
 
