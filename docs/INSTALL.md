@@ -223,6 +223,7 @@ If any of these is missing, see [Troubleshooting](#9-troubleshooting).
 
 - Make sure your project has a `CLAUDE.md` at the root, and that it actually contains French sentences (accents are a strong signal).
 - Alternatively, write the first journal entry in French manually — subsequent runs will detect it and stay in French.
+- To force a language regardless of project signals, set `ZENVIBE_LANG=fr` or `ZENVIBE_LANG=en`.
 
 ### Desktop app shows `ZenVibe` plugin name as `Zenvibe` (lowercase v)
 

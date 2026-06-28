@@ -14,12 +14,13 @@ Design:
 - This server does the IO (git operations, file read/write).
 - Tools take structured arguments produced by the LLM; the server validates,
   performs the side effects, and returns a structured result.
-- Output language is controlled by the caller via a `language` argument on
-  each tool (currently "en" or "fr"). Default: "en".
+- Output language is controlled by `ZENVIBE_LANG=en|fr` when set, otherwise
+  by the caller via a `language` argument on each tool. Default: "en".
 """
 from __future__ import annotations
 
 import datetime
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -106,6 +107,14 @@ def _t(key: str, language: str) -> str:
     """Resolve a localized message. Falls back to English on unknown language."""
     lang_dict = MESSAGES.get(language) or MESSAGES["en"]
     return lang_dict[key]  # KeyError on unknown key — caller bug
+
+
+def _resolve_language(language: str) -> str:
+    """Apply the optional environment override for MCP output language."""
+    override = os.environ.get("ZENVIBE_LANG", "").strip().lower()
+    if override in MESSAGES:
+        return override
+    return language
 
 
 def _resolve_repo(project_path: str) -> Path:
@@ -322,6 +331,7 @@ def zenvibe_pause(
         (paths that changed but were not in `files_to_commit` — surface them
         in `attention_points`).
     """
+    language = _resolve_language(language)
     repo = _resolve_repo(project_path)
     git_result = _do_git_checkpoint(repo, commit_message, files_to_commit)
 
@@ -472,6 +482,7 @@ def zenvibe_checkpoint(
         were not in `files_to_commit`, to surface in the next decision/note)
         and the journal path.
     """
+    language = _resolve_language(language)
     repo = _resolve_repo(project_path)
     git_result = _do_git_checkpoint(repo, commit_message, files_to_commit)
 
