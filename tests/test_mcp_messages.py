@@ -35,6 +35,16 @@ def test_t_falls_back_to_en_on_unknown_language():
     assert server._t("safe_to_compact", "xx") == server._t("safe_to_compact", "en")
 
 
+def test_resolve_language_uses_valid_env_override(monkeypatch):
+    monkeypatch.setenv("ZENVIBE_LANG", "fr")
+    assert server._resolve_language("en") == "fr"
+
+
+def test_resolve_language_ignores_invalid_env_override(monkeypatch):
+    monkeypatch.setenv("ZENVIBE_LANG", "de")
+    assert server._resolve_language("en") == "en"
+
+
 def test_t_raises_on_unknown_key():
     """An unknown message key is a programming error and should raise."""
     import pytest
@@ -78,6 +88,44 @@ def test_zenvibe_pause_writes_french_journal_when_requested(tmp_repo):
     assert "— Pause" in journal
     assert "### Tâches terminées" in journal
     assert "Branche :" in journal
+
+
+def test_zenvibe_pause_env_override_forces_french(tmp_repo, monkeypatch):
+    monkeypatch.setenv("ZENVIBE_LANG", "fr")
+    server.zenvibe_pause(
+        project_path=str(tmp_repo),
+        summary="did stuff",
+        commit_message="feat: stuff",
+        files_to_commit=[],
+        completed=["a"],
+        current_task="b",
+        remaining=["c"],
+        decisions=["d"],
+        open_questions=["e"],
+        language="en",
+    )
+    journal = (tmp_repo / "docs" / "JOURNAL.md").read_text()
+    assert "### Tâches terminées" in journal
+    assert "Branche :" in journal
+
+
+def test_zenvibe_pause_invalid_env_override_is_ignored(tmp_repo, monkeypatch):
+    monkeypatch.setenv("ZENVIBE_LANG", "de")
+    server.zenvibe_pause(
+        project_path=str(tmp_repo),
+        summary="did stuff",
+        commit_message="feat: stuff",
+        files_to_commit=[],
+        completed=["a"],
+        current_task="b",
+        remaining=["c"],
+        decisions=["d"],
+        open_questions=["e"],
+        language="en",
+    )
+    journal = (tmp_repo / "docs" / "JOURNAL.md").read_text()
+    assert "### Completed tasks" in journal
+    assert "Branch:" in journal
 
 
 def test_zenvibe_checkpoint_default_en_message(tmp_repo):

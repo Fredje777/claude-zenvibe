@@ -20,6 +20,7 @@ Design:
 from __future__ import annotations
 
 import datetime
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -106,6 +107,14 @@ def _t(key: str, language: str) -> str:
     """Resolve a localized message. Falls back to English on unknown language."""
     lang_dict = MESSAGES.get(language) or MESSAGES["en"]
     return lang_dict[key]  # KeyError on unknown key — caller bug
+
+
+def _resolve_language(language: str) -> str:
+    """Apply the optional hard language override, ignoring invalid values."""
+    override = os.environ.get("ZENVIBE_LANG")
+    if override in MESSAGES:
+        return override
+    return language
 
 
 def _resolve_repo(project_path: str) -> Path:
@@ -323,6 +332,7 @@ def zenvibe_pause(
         in `attention_points`).
     """
     repo = _resolve_repo(project_path)
+    language = _resolve_language(language)
     git_result = _do_git_checkpoint(repo, commit_message, files_to_commit)
 
     journal = _find_or_create_journal(repo)
@@ -473,6 +483,7 @@ def zenvibe_checkpoint(
         and the journal path.
     """
     repo = _resolve_repo(project_path)
+    language = _resolve_language(language)
     git_result = _do_git_checkpoint(repo, commit_message, files_to_commit)
 
     journal = _find_or_create_journal(repo)
