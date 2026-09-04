@@ -104,6 +104,8 @@ The journal is the **single source of truth**. Git is the safety net beneath it.
 
 ZenVibe writes journals and confirmation messages in **English by default**. It switches to **French** automatically when the project's `CLAUDE.md` is in French OR the existing journal already has French entries. No configuration needed.
 
+Set `ZENVIBE_LANG=en` or `ZENVIBE_LANG=fr` to force a language and skip auto-detection.
+
 If you want a different language, you can [open an issue](https://github.com/Fredje777/claude-zenvibe/issues) — adding a new locale takes a few minutes (see `MESSAGES` in `mcp/server.py`).
 
 ---

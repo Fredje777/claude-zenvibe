@@ -35,6 +35,16 @@ def test_t_falls_back_to_en_on_unknown_language():
     assert server._t("safe_to_compact", "xx") == server._t("safe_to_compact", "en")
 
 
+def test_resolve_language_uses_zenvibe_lang_env(monkeypatch):
+    monkeypatch.setenv("ZENVIBE_LANG", "fr")
+    assert server._resolve_language("en") == "fr"
+
+
+def test_resolve_language_ignores_invalid_zenvibe_lang_env(monkeypatch):
+    monkeypatch.setenv("ZENVIBE_LANG", "de")
+    assert server._resolve_language("fr") == "fr"
+
+
 def test_t_raises_on_unknown_key():
     """An unknown message key is a programming error and should raise."""
     import pytest
@@ -80,6 +90,25 @@ def test_zenvibe_pause_writes_french_journal_when_requested(tmp_repo):
     assert "Branche :" in journal
 
 
+def test_zenvibe_pause_env_forces_french_journal(monkeypatch, tmp_repo):
+    monkeypatch.setenv("ZENVIBE_LANG", "fr")
+    server.zenvibe_pause(
+        project_path=str(tmp_repo),
+        summary="did stuff",
+        commit_message="feat: stuff",
+        files_to_commit=[],
+        completed=["a"],
+        current_task="b",
+        remaining=["c"],
+        decisions=["d"],
+        open_questions=["e"],
+        language="en",
+    )
+    journal = (tmp_repo / "docs" / "JOURNAL.md").read_text()
+    assert "### Tâches terminées" in journal
+    assert "Branche :" in journal
+
+
 def test_zenvibe_checkpoint_default_en_message(tmp_repo):
     result = server.zenvibe_checkpoint(
         project_path=str(tmp_repo),
@@ -110,3 +139,18 @@ def test_zenvibe_checkpoint_french_message(tmp_repo):
     journal = (tmp_repo / "docs" / "JOURNAL.md").read_text()
     assert "— Checkpoint" in journal
     assert "### Fait dans cette session" in journal
+
+
+def test_zenvibe_checkpoint_invalid_env_preserves_language(monkeypatch, tmp_repo):
+    monkeypatch.setenv("ZENVIBE_LANG", "de")
+    result = server.zenvibe_checkpoint(
+        project_path=str(tmp_repo),
+        summary="fait x",
+        commit_message="feat: x",
+        files_to_commit=[],
+        decisions=["d"],
+        files_touched=["a.py"],
+        next_step="faire y",
+        language="fr",
+    )
+    assert "compacter sans risque" in result["next_step_message"].lower()
